@@ -1,524 +1,296 @@
 'use client'
-
-import { useState, useCallback } from 'react'
-import type { MenuData, MenuSection, MenuItem, SetMeal } from '@/lib/types'
+import { useState, useRef } from 'react'
+import { MenuData, MenuSection, MenuItem } from '@/lib/types'
 
 interface Props {
-  templateStyle: string
   initialData: MenuData
+  templateStyle: string
   onChange: (data: MenuData) => void
 }
 
-export default function MenuEditor({ templateStyle, initialData, onChange }: Props) {
-  const [data, setData] = useState<MenuData>(initialData)
-
-  const update = useCallback((patch: Partial<MenuData>) => {
-    setData(prev => {
-      const next = { ...prev, ...patch }
-      onChange(next)
-      return next
-    })
-  }, [onChange])
-
-  const updateSection = (sectionId: string, patch: Partial<MenuSection>) => {
-    const sections = data.sections.map(s => s.id === sectionId ? { ...s, ...patch } : s)
-    update({ sections })
-  }
-
-  const addItem = (sectionId: string) => {
-    const sections = data.sections.map(s => {
-      if (s.id !== sectionId) return s
-      const newItem: MenuItem = { id: `i${Date.now()}`, name: 'New Item', price: '£0.00', desc: '' }
-      return { ...s, items: [...s.items, newItem] }
-    })
-    update({ sections })
-  }
-
-  const updateItem = (sectionId: string, itemId: string, patch: Partial<MenuItem>) => {
-    const sections = data.sections.map(s => {
-      if (s.id !== sectionId) return s
-      return { ...s, items: s.items.map(i => i.id === itemId ? { ...i, ...patch } : i) }
-    })
-    update({ sections })
-  }
-
-  const removeItem = (sectionId: string, itemId: string) => {
-    const sections = data.sections.map(s => {
-      if (s.id !== sectionId) return s
-      return { ...s, items: s.items.filter(i => i.id !== itemId) }
-    })
-    update({ sections })
-  }
-
-  const addSection = (panel: number) => {
-    const newSec: MenuSection = {
-      id: `sec${Date.now()}`,
-      title: 'New Section',
-      subtitle: '',
-      panel,
-      items: [{ id: `i${Date.now()}`, name: 'Item Name', price: '£0.00', desc: '' }]
-    }
-    update({ sections: [...data.sections, newSec] })
-  }
-
-  const removeSection = (sectionId: string) => {
-    update({ sections: data.sections.filter(s => s.id !== sectionId) })
-  }
-
-  const updateSetMeal = (id: string, patch: Partial<SetMeal>) => {
-    const setMeals = data.setMeals.map(m => m.id === id ? { ...m, ...patch } : m)
-    update({ setMeals })
-  }
-
-  const addSetMeal = () => {
-    const m: SetMeal = { id: `sm${Date.now()}`, heading: 'New Set Meal', price: '£0.00', body: 'Describe the meal…' }
-    update({ setMeals: [...data.setMeals, m] })
-  }
-
-  const removeSetMeal = (id: string) => {
-    update({ setMeals: data.setMeals.filter(m => m.id !== id) })
-  }
-
-  // Template router — add more styles here later
-  if (templateStyle === 'indian-classic') {
-    return (
-      <IndianClassicLayout
-        data={data}
-        onInfo={update}
-        onUpdateSection={updateSection}
-        onAddItem={addItem}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
-        onAddSection={addSection}
-        onRemoveSection={removeSection}
-        onUpdateSetMeal={updateSetMeal}
-        onAddSetMeal={addSetMeal}
-        onRemoveSetMeal={removeSetMeal}
-      />
-    )
-  }
-
-  return <div className="p-20 text-center text-white/40">Template style "{templateStyle}" not yet implemented.</div>
-}
-
-// ─────────────────────────────────────────────────────────────
-//  INDIAN CLASSIC LAYOUT
-// ─────────────────────────────────────────────────────────────
-
-interface LayoutProps {
-  data: MenuData
-  onInfo: (patch: Partial<MenuData>) => void
-  onUpdateSection: (id: string, patch: Partial<MenuSection>) => void
-  onAddItem: (sectionId: string) => void
-  onUpdateItem: (sectionId: string, itemId: string, patch: Partial<MenuItem>) => void
-  onRemoveItem: (sectionId: string, itemId: string) => void
-  onAddSection: (panel: number) => void
-  onRemoveSection: (id: string) => void
-  onUpdateSetMeal: (id: string, patch: Partial<SetMeal>) => void
-  onAddSetMeal: () => void
-  onRemoveSetMeal: (id: string) => void
-}
-
-function IndianClassicLayout(p: LayoutProps) {
-  const { data } = p
-  const byPanel = (n: number) => data.sections.filter(s => s.panel === n)
-
-  return (
-    <div id="print-target" className="flex flex-col gap-0 p-8 print:p-0">
-
-      {/* ════ PAGE 1 ════ */}
-      <PageShell label="Page 1 — Cover / Back">
-        <div className="grid grid-cols-[300px_310px_1fr] min-h-[860px]">
-
-          {/* Panel 1 */}
-          <Panel borderRight>
-            {byPanel(1).map(s => (
-              <SectionBlock key={s.id} section={s} {...p} />
-            ))}
-            <AddSectionBtn onClick={() => p.onAddSection(1)} />
-          </Panel>
-
-          {/* Panel 2 */}
-          <Panel borderRight>
-            {byPanel(2).map(s => (
-              <SectionBlock key={s.id} section={s} {...p} />
-            ))}
-            <AddSectionBtn onClick={() => p.onAddSection(2)} />
-          </Panel>
-
-          {/* Panel 3 — Info / Promo */}
-          <div className="flex flex-col" style={{ background: '#FAF7F0' }}>
-
-            {/* Meal Box */}
-            <div className="p-5" style={{ background: '#1E2E12' }}>
-              <E
-                className="font-cinzel text-2xl font-bold text-center block leading-tight"
-                style={{ color: '#C8A042' }}
-                value={data.mealBox.title}
-                onSave={v => p.onInfo({ mealBox: { ...data.mealBox, title: v } })}
-              />
-              <E
-                className="font-cinzel text-xs tracking-widest text-center block mt-1"
-                style={{ color: '#DDB85A' }}
-                value={data.mealBox.subtitle}
-                onSave={v => p.onInfo({ mealBox: { ...data.mealBox, subtitle: v } })}
-              />
-              <div className="text-center mt-3">
-                <span className="text-[11px] text-white/50 uppercase tracking-widest">Only</span>
-                <E
-                  className="font-lato text-3xl font-black block"
-                  style={{ color: '#fff' }}
-                  value={data.mealBox.price}
-                  onSave={v => p.onInfo({ mealBox: { ...data.mealBox, price: v } })}
-                />
-              </div>
-              <ul className="mt-3 space-y-1">
-                {data.mealBox.includes.map((inc, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[10px] text-white/70">
-                    <span style={{ color: '#C8A042' }}>✦</span>
-                    <E
-                      className="flex-1 text-[10px]"
-                      style={{ color: '#ccc' }}
-                      value={inc}
-                      onSave={v => {
-                        const includes = [...data.mealBox.includes]
-                        includes[i] = v
-                        p.onInfo({ mealBox: { ...data.mealBox, includes } })
-                      }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Set Meals */}
-            <div className="p-5" style={{ background: '#EDE5CE' }}>
-              <E
-                className="font-dancing text-2xl font-bold text-center block"
-                style={{ color: '#243318' }}
-                value="Special Set Meals"
-                onSave={() => {}}
-              />
-              <E
-                className="font-cinzel text-[9px] tracking-widest text-center block uppercase mb-3"
-                style={{ color: '#7A6B56' }}
-                value="Chefs Recommendations"
-                onSave={() => {}}
-              />
-              {data.setMeals.map(meal => (
-                <div key={meal.id} className="relative mb-3 rounded p-3" style={{ background: '#C8A042' }}>
-                  <button
-                    onClick={() => p.onRemoveSetMeal(meal.id)}
-                    className="no-print absolute top-1 right-1 text-[8px] bg-red-700 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 hover:opacity-100"
-                    title="Remove"
-                  >✕</button>
-                  <E
-                    className="font-cinzel text-[10px] font-bold text-center block uppercase tracking-wider"
-                    style={{ color: '#2A1A0E' }}
-                    value={meal.heading}
-                    onSave={v => p.onUpdateSetMeal(meal.id, { heading: v })}
-                  />
-                  <E
-                    className="font-lato text-xl font-black text-center block"
-                    style={{ color: '#2A1A0E' }}
-                    value={meal.price}
-                    onSave={v => p.onUpdateSetMeal(meal.id, { price: v })}
-                  />
-                  <E
-                    className="font-lato text-[8px] text-center block mt-1 whitespace-pre-line"
-                    style={{ color: '#2A1A0E' }}
-                    value={meal.body}
-                    onSave={v => p.onUpdateSetMeal(meal.id, { body: v })}
-                    multiline
-                  />
-                </div>
-              ))}
-              <button
-                onClick={p.onAddSetMeal}
-                className="no-print block w-full border border-dashed text-[8px] font-bold uppercase tracking-widest py-1.5 rounded mt-1 transition-colors"
-                style={{ borderColor: '#C8A042', color: '#C8A042' }}
-              >＋ Add Set Meal</button>
-            </div>
-
-            {/* Restaurant Info */}
-            <div className="flex-1 p-5 flex flex-col">
-              <div className="text-center mb-3">
-                <E
-                  className="font-cinzel text-4xl font-black inline-block"
-                  style={{ color: '#243318' }}
-                  value={data.restaurantName}
-                  onSave={v => p.onInfo({ restaurantName: v })}
-                />
-                <E
-                  className="font-cinzel text-xs tracking-widest block uppercase mt-1"
-                  style={{ color: '#243318' }}
-                  value={data.tagline}
-                  onSave={v => p.onInfo({ tagline: v })}
-                />
-              </div>
-
-              <div className="border-2 border-[#2A1A0E] p-2 mx-auto mb-3 text-center" style={{ width: 'fit-content' }}>
-                <div className="text-[8px] font-bold tracking-widest uppercase mb-1" style={{ color: '#2A1A0E' }}>Food Hygiene Rating</div>
-                <div className="flex gap-1 justify-center">
-                  {[1,2,3,4,5].map(n => (
-                    <div
-                      key={n}
-                      onClick={() => p.onInfo({ hygiene: n })}
-                      className="w-5 h-5 border border-[#2A1A0E] flex items-center justify-center text-[9px] cursor-pointer transition-colors"
-                      style={{ background: n <= data.hygiene ? '#2A1A0E' : 'transparent', color: n <= data.hygiene ? '#F4EFE3' : '#2A1A0E' }}
-                    >
-                      {n === 5 ? n : ''}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <E
-                className="font-lato text-xs text-center block leading-loose whitespace-pre-line font-bold"
-                style={{ color: '#2A1A0E' }}
-                value={data.hours}
-                onSave={v => p.onInfo({ hours: v })}
-                multiline
-              />
-
-              <E
-                className="font-lato text-sm font-black text-center block leading-snug uppercase mt-3 mb-2 p-3 border-2 whitespace-pre-line"
-                style={{ color: '#2A1A0E', borderColor: '#2A1A0E' }}
-                value={data.address}
-                onSave={v => p.onInfo({ address: v })}
-                multiline
-              />
-
-              <E
-                className="font-lato text-[9px] text-center block leading-relaxed"
-                style={{ color: '#2A1A0E' }}
-                value={data.deliveryNote}
-                onSave={v => p.onInfo({ deliveryNote: v })}
-              />
-
-              <E
-                className="font-lato text-3xl font-black text-center block my-2"
-                style={{ color: '#2A1A0E' }}
-                value={data.phone}
-                onSave={v => p.onInfo({ phone: v })}
-              />
-
-              <E
-                className="font-lato text-xs text-center block"
-                style={{ color: '#3A5227' }}
-                value={data.website}
-                onSave={v => p.onInfo({ website: v })}
-              />
-
-              <div
-                className="mt-auto text-center py-2 px-3"
-                style={{ background: '#8C1C13' }}
-              >
-                <E
-                  className="font-lato text-[9px] text-white block"
-                  value={data.allergyNote}
-                  onSave={v => p.onInfo({ allergyNote: v })}
-                />
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </PageShell>
-
-      {/* ════ PAGE 2 ════ */}
-      <PageShell label="Page 2 — Full Menu Spread">
-        <div className="grid grid-cols-4 min-h-[920px]">
-          {[4, 5, 6, 7].map((panelN, idx) => (
-            <Panel key={panelN} borderRight={idx < 3}>
-              {byPanel(panelN).map(s => (
-                <SectionBlock key={s.id} section={s} {...p} />
-              ))}
-              <AddSectionBtn onClick={() => p.onAddSection(panelN)} />
-            </Panel>
-          ))}
-        </div>
-      </PageShell>
-
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────
-//  SECTION BLOCK
-// ─────────────────────────────────────────────────────────────
-function SectionBlock({
-  section,
-  onUpdateSection,
-  onAddItem,
-  onUpdateItem,
-  onRemoveItem,
-  onRemoveSection,
-}: {
-  section: MenuSection
-} & Pick<LayoutProps, 'onUpdateSection'|'onAddItem'|'onUpdateItem'|'onRemoveItem'|'onRemoveSection'>) {
-
-  return (
-    <div className="mb-3 relative group/section">
-
-      {/* Section delete */}
-      <button
-        onClick={() => onRemoveSection(section.id)}
-        className="no-print absolute top-0 right-0 z-10 text-[7px] bg-red-800 text-white px-1.5 py-0.5 rounded opacity-0 group-hover/section:opacity-100 transition-opacity"
-        title="Delete section"
-      >✕</button>
-
-      {/* Title */}
-      <E
-        className="font-cinzel text-[11px] font-bold tracking-wider text-center block uppercase py-1 px-2 mb-0.5"
-        style={{ background: '#243318', color: '#F4EFE3' }}
-        value={section.title}
-        onSave={v => onUpdateSection(section.id, { title: v })}
-      />
-
-      {/* Subtitle */}
-      {(section.subtitle !== undefined) && (
-        <E
-          className="font-lato text-[7.5px] italic text-center block mb-1"
-          style={{ color: '#7A6B56' }}
-          value={section.subtitle ?? ''}
-          onSave={v => onUpdateSection(section.id, { subtitle: v })}
-          placeholder="Add subtitle…"
-        />
-      )}
-
-      <div className="border-t mb-1" style={{ borderColor: '#C8A042' }} />
-
-      {/* Items */}
-      {section.items.map(item => (
-        <ItemRow
-          key={item.id}
-          item={item}
-          onUpdate={patch => onUpdateItem(section.id, item.id, patch)}
-          onRemove={() => onRemoveItem(section.id, item.id)}
-        />
-      ))}
-
-      {/* Add item */}
-      <button
-        onClick={() => onAddItem(section.id)}
-        className="no-print block w-full border border-dashed text-[7.5px] font-bold uppercase tracking-widest py-1 rounded mt-1 transition-colors"
-        style={{ borderColor: '#C8B88A', color: '#8A7A65' }}
-      >＋ Add Item</button>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────
-//  ITEM ROW
-// ─────────────────────────────────────────────────────────────
-function ItemRow({ item, onUpdate, onRemove }: {
-  item: MenuItem
-  onUpdate: (patch: Partial<MenuItem>) => void
-  onRemove: () => void
-}) {
-  return (
-    <div className="group/item">
-      <div className="flex items-baseline gap-1 py-px">
-        <E
-          className="font-lato text-[8.5px] font-bold uppercase tracking-wider flex-1"
-          style={{ color: '#2A1A0E' }}
-          value={item.name}
-          onSave={v => onUpdate({ name: v })}
-        />
-        <div className="flex-1 border-b border-dotted" style={{ borderColor: '#7A6B56', position: 'relative', top: '-2px' }} />
-        <E
-          className="font-lato text-[8.5px] font-bold font-variant-numeric whitespace-nowrap"
-          style={{ color: '#2A1A0E' }}
-          value={item.price}
-          onSave={v => onUpdate({ price: v })}
-        />
-        <button
-          onClick={onRemove}
-          className="no-print text-[7px] bg-red-800 text-white px-1 py-px rounded opacity-0 group-hover/item:opacity-100 transition-opacity ml-1"
-        >✕</button>
-      </div>
-      {item.desc && (
-        <E
-          className="font-lato text-[7px] italic block -mt-px mb-0.5"
-          style={{ color: '#7A6B56' }}
-          value={item.desc}
-          onSave={v => onUpdate({ desc: v })}
-          placeholder="Description…"
-        />
-      )}
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────
-//  EDITABLE INLINE ELEMENT
-// ─────────────────────────────────────────────────────────────
-function E({
-  value,
-  onSave,
-  className = '',
-  style,
-  placeholder,
-  multiline,
-}: {
-  value: string
-  onSave: (v: string) => void
-  className?: string
-  style?: React.CSSProperties
-  placeholder?: string
-  multiline?: boolean
-}) {
-  const Tag = multiline ? 'div' : 'span'
+// Editable span
+function E({ value, onChange, tag = 'span', style }: { value: string; onChange: (v: string) => void; tag?: string; style?: React.CSSProperties }) {
+  const Tag = tag as any
   return (
     <Tag
       contentEditable
       suppressContentEditableWarning
-      onBlur={e => onSave(e.currentTarget.textContent ?? '')}
-      className={`${className} outline-none cursor-text focus:ring-1 focus:ring-[#C8A042]/50 focus:rounded-sm`}
-      style={style}
-      data-placeholder={placeholder}
+      onBlur={(e: any) => onChange(e.currentTarget.textContent || '')}
+      style={{ outline: 'none', cursor: 'text', ...style }}
       dangerouslySetInnerHTML={{ __html: value }}
     />
   )
 }
 
-// ─────────────────────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────────────────────
-function Panel({ children, borderRight }: { children: React.ReactNode; borderRight?: boolean }) {
-  return (
-    <div
-      className="p-4 flex flex-col"
-      style={{
-        background: '#F4EFE3',
-        borderRight: borderRight ? '1px solid #C8B88A' : undefined,
-      }}
-    >
-      {children}
+export default function MenuEditor({ initialData, templateStyle, onChange }: Props) {
+  const [data, setData] = useState<MenuData>(initialData)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const update = (patch: Partial<MenuData>) => {
+    const next = { ...data, ...patch }
+    setData(next)
+    onChange(next)
+  }
+
+  const updateSection = (id: string, patch: Partial<MenuSection>) => {
+    const sections = data.sections.map(s => s.id === id ? { ...s, ...patch } : s)
+    update({ sections })
+  }
+
+  const updateItem = (sectionId: string, itemId: string, patch: Partial<MenuItem>) => {
+    const sections = data.sections.map(s =>
+      s.id === sectionId
+        ? { ...s, items: s.items.map(i => i.id === itemId ? { ...i, ...patch } : i) }
+        : s
+    )
+    update({ sections })
+  }
+
+  const addItem = (sectionId: string) => {
+    const sections = data.sections.map(s =>
+      s.id === sectionId
+        ? { ...s, items: [...s.items, { id: Date.now().toString(), name: 'NEW ITEM', price: '£0.00', desc: '' }] }
+        : s
+    )
+    update({ sections })
+  }
+
+  const removeItem = (sectionId: string, itemId: string) => {
+    const sections = data.sections.map(s =>
+      s.id === sectionId ? { ...s, items: s.items.filter(i => i.id !== itemId) } : s
+    )
+    update({ sections })
+  }
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => update({ logo: reader.result as string })
+    reader.readAsDataURL(file)
+  }
+
+  const handleFoodPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => update({ foodPhoto: reader.result as string } as any)
+    reader.readAsDataURL(file)
+  }
+
+  const panelSections = (panel: number) => data.sections.filter(s => s.panel === panel)
+
+  const SectionBlock = ({ section }: { section: MenuSection }) => (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ background: '#243318', padding: '4px 8px', textAlign: 'center', marginBottom: 6 }}>
+        <E
+          value={section.title}
+          onChange={v => updateSection(section.id, { title: v })}
+          style={{ color: '#F4EFE3', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'serif' }}
+        />
+        {section.subtitle && (
+          <div style={{ color: '#C8A042', fontSize: 9, fontStyle: 'italic', marginTop: 2 }}>
+            <E value={section.subtitle} onChange={v => updateSection(section.id, { subtitle: v })} />
+          </div>
+        )}
+      </div>
+      {section.items.map(item => (
+        <div key={item.id} style={{ display: 'flex', alignItems: 'baseline', marginBottom: 3, gap: 2 }}>
+          <div style={{ flex: 1 }}>
+            <E
+              value={item.name}
+              onChange={v => updateItem(section.id, item.id, { name: v })}
+              style={{ fontSize: 9.5, fontWeight: 700, color: '#243318', textTransform: 'uppercase', letterSpacing: 0.3 }}
+            />
+            {item.desc && (
+              <div style={{ fontSize: 7.5, color: '#666', fontStyle: 'italic', lineHeight: 1.2 }}>
+                <E value={item.desc} onChange={v => updateItem(section.id, item.id, { desc: v })} />
+              </div>
+            )}
+          </div>
+          <div style={{ borderBottom: '1px dotted #999', flex: 1, margin: '0 4px', marginBottom: 3 }} />
+          <E
+            value={item.price}
+            onChange={v => updateItem(section.id, item.id, { price: v })}
+            style={{ fontSize: 9.5, color: '#243318', fontWeight: 600, whiteSpace: 'nowrap' }}
+          />
+          <span
+            onClick={() => removeItem(section.id, item.id)}
+            style={{ color: '#c00', fontSize: 8, cursor: 'pointer', marginLeft: 3, opacity: 0.5 }}
+            title="Remove"
+          >✕</span>
+        </div>
+      ))}
+      <div
+        onClick={() => addItem(section.id)}
+        style={{ textAlign: 'center', fontSize: 8, color: '#C8A042', cursor: 'pointer', border: '1px dashed #C8A042', padding: '2px 0', marginTop: 4, borderRadius: 2 }}
+      >
+        + ADD ITEM
+      </div>
     </div>
   )
-}
 
-function PageShell({ label, children }: { children: React.ReactNode; label: string }) {
+  const foodPhoto = (data as any).foodPhoto
+
   return (
-    <div className="mb-10">
-      <div className="no-print text-center text-[10px] tracking-widest uppercase font-bold text-white/30 py-2">
-        {label}
+    <div style={{ background: '#1a1a1a', minHeight: '100vh', padding: '20px 0' }}>
+      <input type="file" ref={fileRef} accept="image/*" style={{ display: 'none' }} onChange={handleFoodPhotoUpload} />
+
+      {/* PAGE 1 */}
+      <div style={{ textAlign: 'center', color: '#888', fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>PAGE 1 — COVER / BACK</div>
+      <div style={{
+        width: 960, margin: '0 auto', background: '#F4EFE3',
+        display: 'grid', gridTemplateColumns: '300px 310px 1fr',
+        boxShadow: '0 4px 40px rgba(0,0,0,0.5)', marginBottom: 32
+      }}>
+        {/* Panel 1 — Biryani / Veg / Fish */}
+        <div style={{ padding: '16px 12px', borderRight: '1px solid #ddd' }}>
+          {panelSections(1).map(s => <SectionBlock key={s.id} section={s} />)}
+          {panelSections(2).map(s => <SectionBlock key={s.id} section={s} />)}
+          {panelSections(3).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
+
+        {/* Panel 2 — Rice / Breads */}
+        <div style={{ padding: '16px 12px', borderRight: '1px solid #ddd' }}>
+          {panelSections(4).map(s => <SectionBlock key={s.id} section={s} />)}
+          {panelSections(5).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
+
+        {/* Panel 3 — Cover/Back: Meal Box + Set Meals + Business Info */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Meal Box */}
+          <div style={{ background: '#243318', padding: '16px 12px', textAlign: 'center' }}>
+            <div style={{ color: '#C8A042', fontSize: 16, fontWeight: 700, fontFamily: 'serif', letterSpacing: 1 }}>
+              MEAL BOX
+            </div>
+            <div style={{ color: '#F4EFE3', fontSize: 9, letterSpacing: 1, marginBottom: 8 }}>Collection Only</div>
+            {data.mealBox && (
+              <>
+                <div style={{ color: '#F4EFE3', fontSize: 9, marginBottom: 2 }}>ONLY</div>
+                <div style={{ color: '#F4EFE3', fontSize: 28, fontWeight: 900, fontFamily: 'serif' }}>
+                  <E value={data.mealBox.price} onChange={v => update({ mealBox: { ...data.mealBox!, price: v } })} />
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  {data.mealBox.includes.map((inc, i) => (
+                    <div key={i} style={{ color: '#C8A042', fontSize: 8.5, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+                      <span>✦</span> {inc}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Set Meals */}
+          <div style={{ background: '#F4EFE3', padding: '12px', flex: 1 }}>
+            <div style={{ textAlign: 'center', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'cursive', fontSize: 16, color: '#243318' }}>Special Set Meals</div>
+              <div style={{ fontSize: 8, letterSpacing: 2, color: '#666' }}>CHEFS RECOMMENDATIONS</div>
+            </div>
+            {data.setMeals?.map(meal => (
+              <div key={meal.id} style={{ background: '#C8A042', borderRadius: 4, padding: '8px 10px', marginBottom: 8, textAlign: 'center' }}>
+                <E value={meal.heading} onChange={v => {
+                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, heading: v } : m)
+                  update({ setMeals })
+                }} style={{ fontSize: 9, fontWeight: 700, color: '#243318', display: 'block' }} />
+                <E value={meal.price} onChange={v => {
+                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, price: v } : m)
+                  update({ setMeals })
+                }} style={{ fontSize: 20, fontWeight: 900, color: '#243318', display: 'block', fontFamily: 'serif' }} />
+                <E value={meal.body} onChange={v => {
+                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, body: v } : m)
+                  update({ setMeals })
+                }} style={{ fontSize: 7.5, color: '#243318', display: 'block', lineHeight: 1.4 }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Business Cover — Logo, Name, Address, Phone */}
+          <div style={{ background: '#F4EFE3', borderTop: '2px solid #C8A042', padding: '12px', textAlign: 'center' }}>
+            {/* Logo */}
+            <div style={{ marginBottom: 8 }}>
+              {data.logo
+                ? <img src={data.logo} alt="logo" style={{ maxHeight: 80, maxWidth: '80%', objectFit: 'contain' }} />
+                : (
+                  <div
+                    onClick={() => fileRef.current?.click()}
+                    style={{ width: 80, height: 80, border: '2px dashed #C8A042', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', margin: '0 auto', color: '#C8A042', fontSize: 10 }}
+                  >
+                    + LOGO
+                  </div>
+                )
+              }
+              {data.logo && (
+                <label style={{ display: 'block', fontSize: 7, color: '#C8A042', cursor: 'pointer', marginTop: 2 }}>
+                  Change Logo
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+                </label>
+              )}
+            </div>
+
+            <E value={data.restaurantName} onChange={v => update({ restaurantName: v })}
+              style={{ fontSize: 20, fontWeight: 900, color: '#243318', display: 'block', fontFamily: 'serif', letterSpacing: 1 }} />
+            <E value={data.tagline || ''} onChange={v => update({ tagline: v })}
+              style={{ fontSize: 9, color: '#C8A042', letterSpacing: 2, display: 'block', marginBottom: 6 }} />
+
+            {/* Food photo */}
+            <div
+              onClick={() => fileRef.current?.click()}
+              style={{ width: '100%', height: 70, background: '#243318', borderRadius: 4, marginBottom: 8, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {foodPhoto
+                ? <img src={foodPhoto} alt="food" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ color: '#C8A042', fontSize: 9 }}>+ Click to add food photo</span>
+              }
+            </div>
+
+            <E value={data.hours || ''} onChange={v => update({ hours: v })}
+              style={{ fontSize: 9, color: '#243318', display: 'block', marginBottom: 6, fontWeight: 700 }} />
+
+            <E value={data.address || ''} onChange={v => update({ address: v })}
+              style={{ fontSize: 11, color: '#243318', display: 'block', fontWeight: 900, marginBottom: 6, lineHeight: 1.4 }} />
+
+            <E value={data.phone || ''} onChange={v => update({ phone: v })}
+              style={{ fontSize: 16, color: '#243318', display: 'block', fontWeight: 900, marginBottom: 4, fontFamily: 'serif' }} />
+
+            <E value={data.website || ''} onChange={v => update({ website: v })}
+              style={{ fontSize: 8, color: '#243318', display: 'block', marginBottom: 6 }} />
+
+            {data.deliveryNote && (
+              <E value={data.deliveryNote} onChange={v => update({ deliveryNote: v })}
+                style={{ fontSize: 7.5, color: '#243318', display: 'block', marginBottom: 4, lineHeight: 1.4 }} />
+            )}
+
+            {data.allergyNote && (
+              <div style={{ background: '#c00', padding: '3px 6px', borderRadius: 2, marginTop: 4 }}>
+                <E value={data.allergyNote} onChange={v => update({ allergyNote: v })}
+                  style={{ fontSize: 7.5, color: '#fff', display: 'block' }} />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="shadow-2xl" style={{ width: '1190px', maxWidth: '100%', margin: '0 auto' }}>
-        {children}
+
+      {/* PAGE 2 */}
+      <div style={{ textAlign: 'center', color: '#888', fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>PAGE 2 — FULL MENU</div>
+      <div style={{
+        width: 960, margin: '0 auto', background: '#F4EFE3',
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
+        boxShadow: '0 4px 40px rgba(0,0,0,0.5)'
+      }}>
+        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
+          {panelSections(6).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
+        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
+          {panelSections(7).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
+        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
+          {panelSections(8).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
+        <div style={{ padding: '16px 10px' }}>
+          {panelSections(9).map(s => <SectionBlock key={s.id} section={s} />)}
+        </div>
       </div>
     </div>
-  )
-}
-
-function AddSectionBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="no-print block w-full border border-dashed text-[8px] font-bold uppercase tracking-widest py-2 rounded mt-2 transition-colors"
-      style={{ borderColor: '#8A7A65', color: '#8A7A65' }}
-    >＋ Add Section</button>
   )
 }
