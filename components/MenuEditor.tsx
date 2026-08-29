@@ -8,23 +8,26 @@ interface Props {
   onChange: (data: MenuData) => void
 }
 
-// Editable span
-function E({ value, onChange, tag = 'span', style }: { value: string; onChange: (v: string) => void; tag?: string; style?: React.CSSProperties }) {
+function E({ value, onChange, tag = 'span', className = '', style }: {
+  value: string; onChange: (v: string) => void; tag?: string; className?: string; style?: React.CSSProperties
+}) {
   const Tag = tag as any
   return (
     <Tag
       contentEditable
       suppressContentEditableWarning
       onBlur={(e: any) => onChange(e.currentTarget.textContent || '')}
-      style={{ outline: 'none', cursor: 'text', ...style }}
+      className={className}
+      style={{ outline: 'none', cursor: 'text', minWidth: 20, ...style }}
       dangerouslySetInnerHTML={{ __html: value }}
     />
   )
 }
 
 export default function MenuEditor({ initialData, templateStyle, onChange }: Props) {
-  const [data, setData] = useState<MenuData>(initialData)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [data, setData] = useState<MenuData>({ ...initialData })
+  const logoRef = useRef<HTMLInputElement>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
 
   const update = (patch: Partial<MenuData>) => {
     const next = { ...data, ...patch }
@@ -39,18 +42,15 @@ export default function MenuEditor({ initialData, templateStyle, onChange }: Pro
 
   const updateItem = (sectionId: string, itemId: string, patch: Partial<MenuItem>) => {
     const sections = data.sections.map(s =>
-      s.id === sectionId
-        ? { ...s, items: s.items.map(i => i.id === itemId ? { ...i, ...patch } : i) }
-        : s
+      s.id === sectionId ? { ...s, items: s.items.map(i => i.id === itemId ? { ...i, ...patch } : i) } : s
     )
     update({ sections })
   }
 
   const addItem = (sectionId: string) => {
+    const newItem: MenuItem = { id: Date.now().toString(), name: 'New Item', price: '0.00' }
     const sections = data.sections.map(s =>
-      s.id === sectionId
-        ? { ...s, items: [...s.items, { id: Date.now().toString(), name: 'NEW ITEM', price: '£0.00', desc: '' }] }
-        : s
+      s.id === sectionId ? { ...s, items: [...s.items, newItem] } : s
     )
     update({ sections })
   }
@@ -62,233 +62,261 @@ export default function MenuEditor({ initialData, templateStyle, onChange }: Pro
     update({ sections })
   }
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadImage = (ref: React.RefObject<HTMLInputElement>, field: 'logo' | 'foodPhoto') => {
+    ref.current?.click()
+  }
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>, field: 'logo' | 'foodPhoto') => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => update({ logo: reader.result as string })
+    reader.onload = (ev) => {
+      if (field === 'logo') update({ logo: ev.target?.result as string })
+      else update({ foodPhoto: ev.target?.result as string } as any)
+    }
     reader.readAsDataURL(file)
   }
 
-  const handleFoodPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => update({ foodPhoto: reader.result as string } as any)
-    reader.readAsDataURL(file)
-  }
-
-  const panelSections = (panel: number) => data.sections.filter(s => s.panel === panel)
-
-  const SectionBlock = ({ section }: { section: MenuSection }) => (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ background: '#243318', padding: '4px 8px', textAlign: 'center', marginBottom: 6 }}>
-        <E
-          value={section.title}
-          onChange={v => updateSection(section.id, { title: v })}
-          style={{ color: '#F4EFE3', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'serif' }}
-        />
-        {section.subtitle && (
-          <div style={{ color: '#C8A042', fontSize: 9, fontStyle: 'italic', marginTop: 2 }}>
-            <E value={section.subtitle} onChange={v => updateSection(section.id, { subtitle: v })} />
-          </div>
-        )}
-      </div>
-      {section.items.map(item => (
-        <div key={item.id} style={{ display: 'flex', alignItems: 'baseline', marginBottom: 3, gap: 2 }}>
-          <div style={{ flex: 1 }}>
-            <E
-              value={item.name}
-              onChange={v => updateItem(section.id, item.id, { name: v })}
-              style={{ fontSize: 9.5, fontWeight: 700, color: '#243318', textTransform: 'uppercase', letterSpacing: 0.3 }}
-            />
-            {item.desc && (
-              <div style={{ fontSize: 7.5, color: '#666', fontStyle: 'italic', lineHeight: 1.2 }}>
-                <E value={item.desc} onChange={v => updateItem(section.id, item.id, { desc: v })} />
-              </div>
-            )}
-          </div>
-          <div style={{ borderBottom: '1px dotted #999', flex: 1, margin: '0 4px', marginBottom: 3 }} />
-          <E
-            value={item.price}
-            onChange={v => updateItem(section.id, item.id, { price: v })}
-            style={{ fontSize: 9.5, color: '#243318', fontWeight: 600, whiteSpace: 'nowrap' }}
-          />
-          <span
-            onClick={() => removeItem(section.id, item.id)}
-            style={{ color: '#c00', fontSize: 8, cursor: 'pointer', marginLeft: 3, opacity: 0.5 }}
-            title="Remove"
-          >✕</span>
-        </div>
-      ))}
-      <div
-        onClick={() => addItem(section.id)}
-        style={{ textAlign: 'center', fontSize: 8, color: '#C8A042', cursor: 'pointer', border: '1px dashed #C8A042', padding: '2px 0', marginTop: 4, borderRadius: 2 }}
-      >
-        + ADD ITEM
-      </div>
-    </div>
-  )
+  const p1Left = data.sections.filter(s => s.panel === 1)
+  const p1Mid = data.sections.filter(s => s.panel === 2)
+  const p2Col1 = data.sections.filter(s => s.panel === 3)
+  const p2Col2 = data.sections.filter(s => s.panel === 4)
+  const p2Col3 = data.sections.filter(s => s.panel === 5)
+  const p2Col4 = data.sections.filter(s => s.panel === 6)
 
   const foodPhoto = (data as any).foodPhoto
 
-  return (
-    <div style={{ background: '#1a1a1a', minHeight: '100vh', padding: '20px 0' }}>
-      <input type="file" ref={fileRef} accept="image/*" style={{ display: 'none' }} onChange={handleFoodPhotoUpload} />
-
-      {/* PAGE 1 */}
-      <div style={{ textAlign: 'center', color: '#888', fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>PAGE 1 — COVER / BACK</div>
-      <div style={{
-        width: 960, margin: '0 auto', background: '#F4EFE3',
-        display: 'grid', gridTemplateColumns: '300px 310px 1fr',
-        boxShadow: '0 4px 40px rgba(0,0,0,0.5)', marginBottom: 32
-      }}>
-        {/* Panel 1 — Biryani / Veg / Fish */}
-        <div style={{ padding: '16px 12px', borderRight: '1px solid #ddd' }}>
-          {panelSections(1).map(s => <SectionBlock key={s.id} section={s} />)}
-          {panelSections(2).map(s => <SectionBlock key={s.id} section={s} />)}
-          {panelSections(3).map(s => <SectionBlock key={s.id} section={s} />)}
-        </div>
-
-        {/* Panel 2 — Rice / Breads */}
-        <div style={{ padding: '16px 12px', borderRight: '1px solid #ddd' }}>
-          {panelSections(4).map(s => <SectionBlock key={s.id} section={s} />)}
-          {panelSections(5).map(s => <SectionBlock key={s.id} section={s} />)}
-        </div>
-
-        {/* Panel 3 — Cover/Back: Meal Box + Set Meals + Business Info */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Meal Box */}
-          <div style={{ background: '#243318', padding: '16px 12px', textAlign: 'center' }}>
-            <div style={{ color: '#C8A042', fontSize: 16, fontWeight: 700, fontFamily: 'serif', letterSpacing: 1 }}>
-              MEAL BOX
-            </div>
-            <div style={{ color: '#F4EFE3', fontSize: 9, letterSpacing: 1, marginBottom: 8 }}>Collection Only</div>
-            {data.mealBox && (
-              <>
-                <div style={{ color: '#F4EFE3', fontSize: 9, marginBottom: 2 }}>ONLY</div>
-                <div style={{ color: '#F4EFE3', fontSize: 28, fontWeight: 900, fontFamily: 'serif' }}>
-                  <E value={data.mealBox.price} onChange={v => update({ mealBox: { ...data.mealBox!, price: v } })} />
-                </div>
-                <div style={{ marginTop: 8 }}>
-                  {data.mealBox.includes.map((inc, i) => (
-                    <div key={i} style={{ color: '#C8A042', fontSize: 8.5, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
-                      <span>✦</span> {inc}
-                    </div>
-                  ))}
-                </div>
-              </>
+  const SectionBlock = ({ section, accentBg = '#2d4a1e', accentText = '#fff' }: { section: MenuSection; accentBg?: string; accentText?: string }) => (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ background: accentBg, color: accentText, textAlign: 'center', padding: '4px 8px', marginBottom: 2 }}>
+        <E value={section.title} onChange={v => updateSection(section.id, { title: v })}
+          style={{ fontWeight: 700, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', display: 'block' }} />
+        {section.subtitle && (
+          <E value={section.subtitle} onChange={v => updateSection(section.id, { subtitle: v })}
+            style={{ fontStyle: 'italic', fontSize: 8.5, color: '#c8d8a0', display: 'block' }} />
+        )}
+      </div>
+      {section.items.map(item => (
+        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dotted #bbb', padding: '2px 0', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1 }}>
+            <E value={item.name} onChange={v => updateItem(section.id, item.id, { name: v })}
+              style={{ fontSize: 9, fontWeight: 600, color: '#2d4a1e', display: 'block' }} />
+            {item.desc && (
+              <E value={item.desc} onChange={v => updateItem(section.id, item.id, { desc: v })}
+                style={{ fontSize: 8, color: '#666', fontStyle: 'italic', display: 'block' }} />
             )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <E value={`£${item.price}`} onChange={v => updateItem(section.id, item.id, { price: v.replace('£','') })}
+              style={{ fontSize: 9, fontWeight: 600, color: '#2d4a1e', whiteSpace: 'nowrap' }} />
+            <span onClick={() => removeItem(section.id, item.id)}
+              style={{ cursor: 'pointer', color: '#e33', fontSize: 10, lineHeight: 1, flexShrink: 0 }}>×</span>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => addItem(section.id)}
+        style={{ width: '100%', border: '1px dashed #b8a060', background: 'transparent', color: '#b8a060', fontSize: 8, padding: '2px 0', cursor: 'pointer', marginTop: 2 }}>
+        + ADD ITEM
+      </button>
+    </div>
+  )
+
+  return (
+    <div style={{ fontFamily: 'Georgia, serif', background: '#fff' }}>
+      {/* Hidden file inputs */}
+      <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFile(e, 'logo')} />
+      <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFile(e, 'foodPhoto')} />
+
+      {/* ═══════════════ PAGE 1 ═══════════════ */}
+      <div style={{ background: '#f5f0e8', padding: 8, marginBottom: 4, textAlign: 'center', fontSize: 10, color: '#666', letterSpacing: 2, textTransform: 'uppercase' }}>
+        PAGE 1 — FULL MENU
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, background: '#fff', border: '1px solid #ddd' }}>
+
+        {/* LEFT COLUMN */}
+        <div style={{ padding: '12px 10px', borderRight: '2px solid #2d4a1e', background: '#faf8f2' }}>
+          {p1Left.length > 0 ? p1Left.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 1)</p>
+          )}
+        </div>
+
+        {/* MIDDLE COLUMN */}
+        <div style={{ padding: '12px 10px', borderRight: '2px solid #2d4a1e', background: '#faf8f2' }}>
+          {p1Mid.length > 0 ? p1Mid.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 2)</p>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN — COVER PANEL */}
+        <div style={{ background: '#f5f0e8', display: 'flex', flexDirection: 'column' }}>
+
+          {/* TOP: Meal Box dark section */}
+          <div style={{ background: '#2d4a1e', color: '#fff', padding: '14px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#c8d8a0', marginBottom: 2 }}>MEAL BOX</div>
+            <div style={{ fontSize: 9, color: '#aaa', marginBottom: 4 }}>Collection Only</div>
+            <div style={{ fontSize: 10, color: '#eee', marginBottom: 2 }}>ONLY</div>
+            <E value={data.mealBox?.price || '£11.99'}
+              onChange={v => update({ mealBox: { ...data.mealBox!, price: v, title: data.mealBox?.title || '', subtitle: data.mealBox?.subtitle || '', includes: data.mealBox?.includes || [] } })}
+              style={{ fontSize: 28, fontWeight: 700, color: '#f0d060', display: 'block' }} />
+            <div style={{ marginTop: 8, fontSize: 9, color: '#c8d8a0', textAlign: 'left' }}>
+              {(data.mealBox?.includes || ['Starter', 'Side Dish', 'Pilau Rice', 'Curry of your choice']).map((inc, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: '#f0d060' }}>◆</span>
+                  <E value={inc}
+                    onChange={v => {
+                      const includes = [...(data.mealBox?.includes || [])]
+                      includes[i] = v
+                      update({ mealBox: { ...data.mealBox!, includes, title: data.mealBox?.title || '', subtitle: data.mealBox?.subtitle || '', price: data.mealBox?.price || '' } })
+                    }}
+                    style={{ color: '#c8d8a0', fontSize: 9 }} />
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Set Meals */}
-          <div style={{ background: '#F4EFE3', padding: '12px', flex: 1 }}>
-            <div style={{ textAlign: 'center', marginBottom: 8 }}>
-              <div style={{ fontFamily: 'cursive', fontSize: 16, color: '#243318' }}>Special Set Meals</div>
-              <div style={{ fontSize: 8, letterSpacing: 2, color: '#666' }}>CHEFS RECOMMENDATIONS</div>
+          {data.setMeals && data.setMeals.length > 0 && (
+            <div style={{ padding: '10px 14px', background: '#faf8f2', borderBottom: '1px solid #ddd' }}>
+              <div style={{ textAlign: 'center', fontFamily: 'Georgia, serif', fontSize: 13, color: '#2d4a1e', fontStyle: 'italic', marginBottom: 2 }}>Special Set Meals</div>
+              <div style={{ textAlign: 'center', fontSize: 8, letterSpacing: 2, color: '#888', textTransform: 'uppercase', marginBottom: 8 }}>CHEF'S RECOMMENDATIONS</div>
+              {data.setMeals.map((meal, i) => (
+                <div key={meal.id} style={{ background: '#b8a060', borderRadius: 2, padding: '8px 10px', marginBottom: 6 }}>
+                  <E value={meal.heading} onChange={v => {
+                    const setMeals = data.setMeals!.map((m, j) => j === i ? { ...m, heading: v } : m)
+                    update({ setMeals })
+                  }} style={{ display: 'block', color: '#fff', fontWeight: 700, fontSize: 10, marginBottom: 2 }} />
+                  <E value={meal.price} onChange={v => {
+                    const setMeals = data.setMeals!.map((m, j) => j === i ? { ...m, price: v } : m)
+                    update({ setMeals })
+                  }} style={{ display: 'block', color: '#fff', fontWeight: 900, fontSize: 20 }} />
+                  <E value={meal.body} onChange={v => {
+                    const setMeals = data.setMeals!.map((m, j) => j === i ? { ...m, body: v } : m)
+                    update({ setMeals })
+                  }} style={{ display: 'block', color: '#f5f0d0', fontSize: 8, marginTop: 4, lineHeight: 1.4 }} />
+                </div>
+              ))}
             </div>
-            {data.setMeals?.map(meal => (
-              <div key={meal.id} style={{ background: '#C8A042', borderRadius: 4, padding: '8px 10px', marginBottom: 8, textAlign: 'center' }}>
-                <E value={meal.heading} onChange={v => {
-                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, heading: v } : m)
-                  update({ setMeals })
-                }} style={{ fontSize: 9, fontWeight: 700, color: '#243318', display: 'block' }} />
-                <E value={meal.price} onChange={v => {
-                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, price: v } : m)
-                  update({ setMeals })
-                }} style={{ fontSize: 20, fontWeight: 900, color: '#243318', display: 'block', fontFamily: 'serif' }} />
-                <E value={meal.body} onChange={v => {
-                  const setMeals = data.setMeals!.map(m => m.id === meal.id ? { ...m, body: v } : m)
-                  update({ setMeals })
-                }} style={{ fontSize: 7.5, color: '#243318', display: 'block', lineHeight: 1.4 }} />
-              </div>
-            ))}
-          </div>
+          )}
 
-          {/* Business Cover — Logo, Name, Address, Phone */}
-          <div style={{ background: '#F4EFE3', borderTop: '2px solid #C8A042', padding: '12px', textAlign: 'center' }}>
-            {/* Logo */}
-            <div style={{ marginBottom: 8 }}>
+          {/* LOGO AREA */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 14px', gap: 10 }}>
+
+            {/* Logo upload */}
+            <div onClick={() => uploadImage(logoRef, 'logo')}
+              style={{ cursor: 'pointer', width: '100%', minHeight: 80, border: '2px dashed #b8a060', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, overflow: 'hidden', background: '#fff' }}>
               {data.logo
-                ? <img src={data.logo} alt="logo" style={{ maxHeight: 80, maxWidth: '80%', objectFit: 'contain' }} />
-                : (
-                  <div
-                    onClick={() => fileRef.current?.click()}
-                    style={{ width: 80, height: 80, border: '2px dashed #C8A042', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', margin: '0 auto', color: '#C8A042', fontSize: 10 }}
-                  >
-                    + LOGO
+                ? <img src={data.logo} style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain' }} alt="logo" />
+                : <div style={{ textAlign: 'center', color: '#b8a060', fontSize: 10 }}>
+                    <div style={{ fontSize: 22 }}>🏪</div>
+                    <div>Click to upload LOGO</div>
                   </div>
-                )
               }
-              {data.logo && (
-                <label style={{ display: 'block', fontSize: 7, color: '#C8A042', cursor: 'pointer', marginTop: 2 }}>
-                  Change Logo
-                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
-                </label>
-              )}
             </div>
 
+            {/* Restaurant name */}
             <E value={data.restaurantName} onChange={v => update({ restaurantName: v })}
-              style={{ fontSize: 20, fontWeight: 900, color: '#243318', display: 'block', fontFamily: 'serif', letterSpacing: 1 }} />
-            <E value={data.tagline || ''} onChange={v => update({ tagline: v })}
-              style={{ fontSize: 9, color: '#C8A042', letterSpacing: 2, display: 'block', marginBottom: 6 }} />
+              tag="div"
+              style={{ fontSize: 15, fontWeight: 700, color: '#2d4a1e', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }} />
 
-            {/* Food photo */}
-            <div
-              onClick={() => fileRef.current?.click()}
-              style={{ width: '100%', height: 70, background: '#243318', borderRadius: 4, marginBottom: 8, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {foodPhoto
-                ? <img src={foodPhoto} alt="food" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ color: '#C8A042', fontSize: 9 }}>+ Click to add food photo</span>
-              }
-            </div>
-
-            <E value={data.hours || ''} onChange={v => update({ hours: v })}
-              style={{ fontSize: 9, color: '#243318', display: 'block', marginBottom: 6, fontWeight: 700 }} />
-
-            <E value={data.address || ''} onChange={v => update({ address: v })}
-              style={{ fontSize: 11, color: '#243318', display: 'block', fontWeight: 900, marginBottom: 6, lineHeight: 1.4 }} />
-
-            <E value={data.phone || ''} onChange={v => update({ phone: v })}
-              style={{ fontSize: 16, color: '#243318', display: 'block', fontWeight: 900, marginBottom: 4, fontFamily: 'serif' }} />
-
-            <E value={data.website || ''} onChange={v => update({ website: v })}
-              style={{ fontSize: 8, color: '#243318', display: 'block', marginBottom: 6 }} />
-
-            {data.deliveryNote && (
-              <E value={data.deliveryNote} onChange={v => update({ deliveryNote: v })}
-                style={{ fontSize: 7.5, color: '#243318', display: 'block', marginBottom: 4, lineHeight: 1.4 }} />
+            {data.tagline && (
+              <E value={data.tagline} onChange={v => update({ tagline: v })}
+                tag="div"
+                style={{ fontSize: 9, color: '#888', textAlign: 'center', fontStyle: 'italic' }} />
             )}
 
+            {/* Food Hygiene Rating */}
+            {data.hygiene && (
+              <div style={{ border: '2px solid #2d4a1e', padding: '4px 8px', textAlign: 'center', fontSize: 8, color: '#2d4a1e' }}>
+                <div style={{ fontWeight: 700, fontSize: 9, letterSpacing: 1 }}>FOOD HYGIENE RATING</div>
+                <E value={data.hygiene} onChange={v => update({ hygiene: v })}
+                  style={{ fontSize: 18, fontWeight: 900, color: '#2d4a1e', display: 'block' }} />
+              </div>
+            )}
+
+            {/* Food photo */}
+            <div onClick={() => photoRef.current?.click()}
+              style={{ cursor: 'pointer', width: '100%', minHeight: 120, border: '2px dashed #b8a060', borderRadius: 4, overflow: 'hidden', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {foodPhoto
+                ? <img src={foodPhoto} style={{ width: '100%', height: 140, objectFit: 'cover' }} alt="food" />
+                : <div style={{ textAlign: 'center', color: '#b8a060', fontSize: 10 }}>
+                    <div style={{ fontSize: 28 }}>🍛</div>
+                    <div>Click to upload food photo</div>
+                  </div>
+              }
+            </div>
+
+            {/* Hours */}
+            {data.hours && (
+              <E value={data.hours} onChange={v => update({ hours: v })}
+                tag="div"
+                style={{ fontWeight: 700, fontSize: 10, textAlign: 'center', color: '#2d4a1e', textTransform: 'uppercase', letterSpacing: 0.5 }} />
+            )}
+
+            {/* Address */}
+            {data.address && (
+              <E value={data.address} onChange={v => update({ address: v })}
+                tag="div"
+                style={{ fontWeight: 900, fontSize: 16, textAlign: 'center', color: '#1a1a1a', lineHeight: 1.2, textTransform: 'uppercase' }} />
+            )}
+
+            {/* Delivery note */}
+            {data.deliveryNote && (
+              <E value={data.deliveryNote} onChange={v => update({ deliveryNote: v })}
+                tag="div"
+                style={{ fontSize: 8, textAlign: 'center', color: '#555', lineHeight: 1.4 }} />
+            )}
+
+            {/* Phone */}
+            {data.phone && (
+              <E value={data.phone} onChange={v => update({ phone: v })}
+                tag="div"
+                style={{ fontWeight: 900, fontSize: 22, textAlign: 'center', color: '#1a1a1a', letterSpacing: 1 }} />
+            )}
+
+            {/* Website */}
+            {data.website && (
+              <E value={data.website} onChange={v => update({ website: v })}
+                tag="div"
+                style={{ fontSize: 9, textAlign: 'center', color: '#2d4a1e', textDecoration: 'underline' }} />
+            )}
+
+            {/* Allergy note */}
             {data.allergyNote && (
-              <div style={{ background: '#c00', padding: '3px 6px', borderRadius: 2, marginTop: 4 }}>
+              <div style={{ background: '#e03020', color: '#fff', padding: '4px 8px', width: '100%', textAlign: 'center', borderRadius: 2 }}>
                 <E value={data.allergyNote} onChange={v => update({ allergyNote: v })}
-                  style={{ fontSize: 7.5, color: '#fff', display: 'block' }} />
+                  style={{ fontSize: 8, color: '#fff' }} />
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* PAGE 2 */}
-      <div style={{ textAlign: 'center', color: '#888', fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>PAGE 2 — FULL MENU</div>
-      <div style={{
-        width: 960, margin: '0 auto', background: '#F4EFE3',
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
-        boxShadow: '0 4px 40px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
-          {panelSections(6).map(s => <SectionBlock key={s.id} section={s} />)}
+      {/* ═══════════════ PAGE 2 ═══════════════ */}
+      <div style={{ background: '#f5f0e8', padding: 8, marginTop: 16, marginBottom: 4, textAlign: 'center', fontSize: 10, color: '#666', letterSpacing: 2, textTransform: 'uppercase' }}>
+        PAGE 2 — FULL MENU
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0, background: '#fff', border: '1px solid #ddd' }}>
+        <div style={{ padding: '12px 10px', borderRight: '2px solid #2d4a1e', background: '#faf8f2' }}>
+          {p2Col1.length > 0 ? p2Col1.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 3)</p>
+          )}
         </div>
-        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
-          {panelSections(7).map(s => <SectionBlock key={s.id} section={s} />)}
+        <div style={{ padding: '12px 10px', borderRight: '2px solid #2d4a1e', background: '#faf8f2' }}>
+          {p2Col2.length > 0 ? p2Col2.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 4)</p>
+          )}
         </div>
-        <div style={{ padding: '16px 10px', borderRight: '1px solid #ddd' }}>
-          {panelSections(8).map(s => <SectionBlock key={s.id} section={s} />)}
+        <div style={{ padding: '12px 10px', borderRight: '2px solid #2d4a1e', background: '#faf8f2' }}>
+          {p2Col3.length > 0 ? p2Col3.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 5)</p>
+          )}
         </div>
-        <div style={{ padding: '16px 10px' }}>
-          {panelSections(9).map(s => <SectionBlock key={s.id} section={s} />)}
+        <div style={{ padding: '12px 10px', background: '#faf8f2' }}>
+          {p2Col4.length > 0 ? p2Col4.map(s => <SectionBlock key={s.id} section={s} />) : (
+            <p style={{ color: '#aaa', fontSize: 10, textAlign: 'center' }}>No sections (panel 6)</p>
+          )}
         </div>
       </div>
     </div>
