@@ -1,5 +1,3 @@
-// ─── Menu data types ─────────────────────────────────────────────
-
 export interface MenuItem {
   id: string
   name: string
@@ -11,7 +9,7 @@ export interface MenuSection {
   id: string
   title: string
   subtitle?: string
-  panel: number   // which column/panel (1-7) in the template
+  panel: number
   items: MenuItem[]
 }
 
@@ -33,6 +31,7 @@ export interface MenuData {
   restaurantName: string
   tagline?: string
   logo?: string
+  foodPhoto?: string
   phone?: string
   website?: string
   address?: string
@@ -44,8 +43,6 @@ export interface MenuData {
   setMeals?: SetMeal[]
   sections: MenuSection[]
 }
-
-// ─── Database row types ───────────────────────────────────────────
 
 export interface Template {
   id: string
