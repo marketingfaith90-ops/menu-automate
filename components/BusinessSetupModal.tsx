@@ -10,11 +10,11 @@ interface Props {
 export default function BusinessSetupModal({ defaultData, onConfirm }: Props) {
   const [form, setForm] = useState({
     restaurantName: '',
-    tagline: defaultData.tagline || 'Indian Takeaway',
-    phone: defaultData.phone || '',
-    website: defaultData.website || '',
-    address: defaultData.address || '',
-    hours: defaultData.hours || 'Open 7 Days a Week\n5PM – Late',
+    tagline: defaultData?.tagline || 'Indian Takeaway',
+    phone: defaultData?.phone || '',
+    website: defaultData?.website || '',
+    address: defaultData?.address || '',
+    hours: defaultData?.hours || 'Open 7 Days a Week\n5PM – Late',
   })
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -34,15 +34,15 @@ export default function BusinessSetupModal({ defaultData, onConfirm }: Props) {
     const merged: MenuData = {
       ...defaultData,
       ...form,
-      logo: logoPreview || defaultData.logo || '',
+      logo: logoPreview || defaultData?.logo || '',
+      sections: defaultData?.sections || [],
     }
     onConfirm(merged)
   }
 
   const inp: React.CSSProperties = {
     width: '100%', background: '#1e1e1e', border: '1px solid #333', borderRadius: 8,
-    color: '#fff', padding: '10px 14px', fontSize: 14, boxSizing: 'border-box',
-    outline: 'none',
+    color: '#fff', padding: '10px 14px', fontSize: 14, boxSizing: 'border-box', outline: 'none',
   }
 
   return (
