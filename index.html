@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Menu Automate</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══ RESET ══ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#0d0d0d;color:#e0e0e0;min-height:100vh}
+
+/* ══ LOGIN ══ */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 40%,#1a1200 0%,#0d0d0d 70%)}
+.login-box{background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:44px 40px;width:340px;box-shadow:0 20px 60px #0009}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:24px;color:#b8a060;letter-spacing:3px;font-weight:900}
+.login-logo p{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;margin-top:5px}
+.lf-label{display:block;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.lf-input{width:100%;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:5px;color:#fff;padding:10px 13px;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .15s;margin-bottom:14px}
+.lf-input:focus{border-color:#b8a060}
+.lf-btn{width:100%;background:#b8a060;color:#0d0d0d;border:none;border-radius:5px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:'Inter',sans-serif;transition:background .15s;margin-top:4px}
+.lf-btn:hover{background:#cdb070}
+.lf-btn:disabled{opacity:.5;cursor:not-allowed}
+.lf-error{background:#2a0f0f;border:1px solid #5a1a1a;color:#ff9090;padding:9px 12px;border-radius:5px;font-size:11px;margin-bottom:14px}
+
+/* ══ APP SHELL ══ */
+.shell{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#111;border-bottom:2px solid #b8a060;height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:200}
+.tb-logo{font-family:'Playfair Display',serif;font-size:15px;font-weight:900;color:#b8a060;letter-spacing:2px;white-space:nowrap}
+.tb-logo span{color:#fff}
+.tb-nav{display:flex;gap:1px;margin-left:32px}
+.tb-nav-btn{background:none;border:none;color:#555;padding:6px 15px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.5px;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;height:50px;display:flex;align-items:center;transition:all .15s}
+.tb-nav-btn:hover{color:#b8a060}
+.tb-nav-btn.on{color:#b8a060;border-bottom-color:#b8a060}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-user{font-size:10px;color:#555;background:#1a1a1a;padding:4px 11px;border-radius:20px;border:1px solid #2a2a2a}
+.tb-logout{background:none;border:none;color:#444;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif}
+.tb-logout:hover{color:#ff7070}
+
+.page{flex:1;padding:26px 24px}
+
+/* ══ COMMON ══ */
+.pg-hdr{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.pg-title{font-size:16px;font-weight:700;color:#fff}
+.pg-sub{font-size:10px;color:#444;margin-top:1px}
+.count-badge{background:#b8a060;color:#111;font-size:8px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px}
+.ml-auto{margin-left:auto}
+
+.btn{border:none;border-radius:5px;padding:7px 14px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:'Inter',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-gold{background:#b8a060;color:#111}
+.btn-gold:hover{background:#cdb070}
+.btn-ghost{background:#1a1a1a;color:#777;border:1px solid #2a2a2a}
+.btn-ghost:hover{border-color:#b8a060;color:#b8a060}
+.btn-red{background:#2a1010;color:#ff8080;border:1px solid #4a1a1a}
+.btn-red:hover{background:#3a1a1a}
+.btn-lg{padding:9px 22px;font-size:12px}
+.btn-sm{padding:4px 10px;font-size:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.search-inp{background:#111;border:1px solid #2a2a2a;border-radius:5px;color:#fff;padding:7px 13px;font-size:12px;font-family:'Inter',sans-serif;outline:none;width:230px;transition:border .15s}
+.search-inp:focus{border-color:#b8a060}
+
+.empty{text-align:center;padding:60px 20px;color:#2a2a2a}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty p{font-size:12px}
+
+/* ══ RESTAURANT CARDS ══ */
+.rest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.rest-card{background:#141414;border:1px solid #222;border-radius:8px;overflow:hidden;transition:all .2s;cursor:pointer}
+.rest-card:hover{border-color:#b8a060;transform:translateY(-2px);box-shadow:0 8px 24px #0006}
+.rc-logo{height:72px;background:#0d0d0d;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1a1a1a;overflow:hidden}
+.rc-logo img{max-height:58px;max-width:88%;object-fit:contain}
+.rc-logo-ph{color:#2a2a2a;font-size:10px;text-align:center}
+.rc-body{padding:12px}
+.rc-name{font-size:12px;font-weight:700;color:#e0e0e0;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-addr{font-size:9px;color:#444;line-height:1.4}
+.rc-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:10px}
+.tag-g{background:#0f2a0f;color:#70c070}
+.tag-a{background:#201508;color:#b8a060}
+.rc-foot{padding:8px 12px;border-top:1px solid #1a1a1a;display:flex;gap:6px}
+
+/* ══ MODAL ══ */
+.ov{position:fixed;inset:0;background:#000a;z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#141414;border:1px solid #252525;border-radius:10px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px #0009}
+.mhdr{padding:16px 20px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#141414;z-index:1}
+.mhdr-title{font-size:13px;font-weight:700;color:#fff}
+.mhdr-close{background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1;padding:0}
+.mhdr-close:hover{color:#fff}
+.mbody{padding:20px}
+.mfoot{padding:14px 20px;border-top:1px solid #1e1e1e;display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#141414}
+
+.fi{margin-bottom:13px}
+.fi label{display:block;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.fi input,.fi textarea,.fi select{width:100%;background:#0d0d0d;border:1px solid #222;border-radius:4px;color:#e0e0e0;padding:8px 11px;font-size:11px;font-family:'Inter',sans-serif;outline:none;transition:border .15s}
+.fi input:focus,.fi textarea:focus,.fi select:focus{border-color:#b8a060}
+.fi textarea{resize:vertical;line-height:1.5}
+.fi-hint{font-size:8.5px;color:#383838;margin-top:3px}
+.fi-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fi-sec{font-size:9px;font-weight:700;color:#b8a060;letter-spacing:1.5px;text-transform:uppercase;margin:18px 0 12px;padding-bottom:6px;border-bottom:1px solid #1e1e1e}
+
+/* ══ GENERATE PAGE ══ */
+.gen-layout{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
+.side-panel{background:#141414;border:1px solid #222;border-radius:8px;overflow:hidden}
+.sp-hdr{padding:11px 14px;border-bottom:1px solid #1e1e1e;font-size:9px;font-weight:700;color:#b8a060;letter-spacing:1.5px;text-transform:uppercase}
+.sp-item{padding:10px 14px;border-bottom:1px solid #151515;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .1s}
+.sp-item:hover{background:#1a1a1a}
+.sp-item.sel{background:#0f1f0f;border-left:3px solid #b8a060}
+.sp-thumb{width:34px;height:34px;border-radius:4px;background:#0d0d0d;border:1px solid #222;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sp-thumb img{width:100%;height:100%;object-fit:contain}
+.sp-name{font-size:11px;font-weight:600;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-city{font-size:9px;color:#444}
+
+.preview-area{background:#141414;border:1px solid #222;border-radius:8px;overflow:hidden}
+.prev-toolbar{padding:11px 14px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;gap:10px;background:#111}
+.prev-info{font-size:10px;color:#555;flex:1}
+.prev-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;color:#252525;gap:10px}
+.prev-placeholder .icon{font-size:48px}
+.prev-placeholder p{font-size:11px}
+.prev-scroll{overflow-x:auto;padding:14px}
+
+/* ══ SETTINGS ══ */
+.set-layout{display:grid;grid-template-columns:200px 1fr;gap:18px}
+.set-nav{background:#141414;border:1px solid #222;border-radius:8px;overflow:hidden}
+.set-nav-item{padding:10px 16px;cursor:pointer;font-size:11px;color:#555;border-left:3px solid transparent;transition:all .15s}
+.set-nav-item:hover{color:#b8a060;background:#111}
+.set-nav-item.on{color:#b8a060;background:#111;border-left-color:#b8a060}
+.set-panel{background:#141414;border:1px solid #222;border-radius:8px;padding:22px}
+.set-panel h3{font-size:12px;font-weight:700;color:#fff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #1e1e1e}
+.set-code{background:#0d0d0d;border:1px solid #1e1e1e;border-radius:5px;padding:14px;font-size:10px;color:#90c8a0;font-family:monospace;overflow-x:auto;line-height:1.7}
+
+.user-tbl{width:100%;border-collapse:collapse}
+.user-tbl th{font-size:8.5px;color:#444;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;text-align:left;border-bottom:1px solid #1e1e1e}
+.user-tbl td{font-size:11px;color:#bbb;padding:8px 10px;border-bottom:1px solid #141414}
+.user-tbl tr:last-child td{border:none}
+
+/* ══ MENU TEMPLATE (A3 print) ══ */
+.menu-root{width:1060px;background:#888}
+.pg1{display:grid;grid-template-columns:1fr 1fr 185px 185px;background:#faf8f2}
+.pg2{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#faf8f2;margin-top:6px}
+.mc{padding:9px 8px;border-right:1px solid #d5d0c5;min-width:0;background:#faf8f2}
+.mc:last-child{border-right:none}
+.msec{margin-bottom:9px}
+.msh{text-align:center;padding:0 3px 4px;margin-bottom:3px;border-bottom:2px solid #2d4a1e}
+.msh-t{font-weight:700;font-size:8.5px;letter-spacing:.8px;text-transform:uppercase;color:#2d4a1e;display:block;line-height:1.3;font-family:'Inter',sans-serif}
+.msh-s{font-size:6px;font-style:italic;color:#777;display:block;margin-top:1px;font-family:'Inter',sans-serif}
+.mitem{padding:1.5px 0}
+.mitem-row{display:flex;align-items:baseline}
+.mitem-name{font-weight:700;font-size:7.5px;color:#111;text-transform:uppercase;white-space:nowrap;padding-right:2px;line-height:1.4;font-family:'Inter',sans-serif}
+.mitem-dots{flex:1;height:1px;border-bottom:1px dotted #aaa;margin-bottom:3px;min-width:4px}
+.mitem-price{font-weight:700;font-size:7.5px;color:#111;white-space:nowrap;padding-left:2px;line-height:1.4;font-family:'Inter',sans-serif}
+.mitem-desc{font-size:6px;font-style:italic;color:#888;line-height:1.3;display:block;font-family:'Inter',sans-serif}
+/* cover left */
+.cvl{background:#1a120a;display:flex;flex-direction:column;border-right:2px solid #b8a060}
+.mbhdr{background:#0f0a04;padding:7px 6px 6px;text-align:center;border-bottom:2px solid #b8a060}
+.mbhdr-rest{font-size:10px;font-weight:900;letter-spacing:5px;color:#c8d8a0;text-transform:uppercase;font-family:'Playfair Display',serif;display:block}
+.mbhdr-main{font-size:16px;font-weight:900;letter-spacing:2px;color:#f0c040;text-transform:uppercase;line-height:1;font-family:'Playfair Display',serif;display:block;margin:2px 0}
+.mbhdr-sub{font-size:6.5px;letter-spacing:3px;color:#b8a060;display:block;border:1px solid #b8a060;padding:2px 5px;margin:3px auto 0;width:fit-content}
+.mbphoto{position:relative;width:100%;overflow:hidden;background:#111;min-height:115px;display:flex;align-items:center;justify-content:center}
+.mbphoto img{width:100%;object-fit:cover;display:block;min-height:115px}
+.mb-ph{color:#333;font-size:8px;text-align:center;padding:16px 8px}
+.mb-price-ovl{position:absolute;bottom:7px;left:7px;background:rgba(5,3,1,.9);padding:4px 8px;border:1px solid #b8a060;border-radius:2px}
+.mb-only{font-size:5.5px;color:#ccc;text-transform:uppercase;letter-spacing:1px;display:block;font-family:'Inter',sans-serif}
+.mb-price{font-size:21px;font-weight:900;color:#f0c040;line-height:1;display:block;font-family:'Playfair Display',serif}
+.mb-buls{position:absolute;bottom:6px;right:5px;background:rgba(5,3,1,.85);padding:4px 7px;border-radius:2px;border:1px solid #2e2510}
+.mb-bul{display:flex;align-items:flex-start;gap:3px;margin:1px 0}
+.mb-dot{color:#b8a060;font-size:5.5px;flex-shrink:0;margin-top:2px}
+.mb-btxt{color:#e0d8b8;font-size:6px;text-transform:uppercase;line-height:1.3;font-family:'Inter',sans-serif}
+.mb-note{font-size:5.5px;color:#777;font-style:italic;text-align:center;margin-top:2px;font-family:'Inter',sans-serif}
+.sp2card{background:#b8a060;margin:5px 7px;padding:5px 8px;border-radius:2px}
+.sp2-t{display:block;color:#1a120a;font-weight:700;font-size:8px;text-align:center;text-transform:uppercase;letter-spacing:.5px;line-height:1.2;font-family:'Inter',sans-serif}
+.sp2-p{display:block;color:#1a120a;font-weight:900;font-size:16px;text-align:center;line-height:1.1;font-family:'Playfair Display',serif}
+.sp2-b{display:block;color:#1a120a;font-size:6px;margin-top:2px;line-height:1.5;opacity:.85;font-family:'Inter',sans-serif;white-space:pre-line}
+.sm-ttl{font-family:'Playfair Display',serif;font-size:12px;color:#c8d8a0;font-style:italic;text-align:center;padding:5px 7px 1px}
+.sm-sub{font-size:6px;letter-spacing:2px;color:#444;text-transform:uppercase;text-align:center;margin-bottom:4px;font-family:'Inter',sans-serif}
+.smcard{background:#b8a060;margin:0 7px 4px;padding:5px 8px;border-radius:2px}
+.smc-t{display:block;color:#1a120a;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:.3px;font-family:'Inter',sans-serif}
+.smc-p{display:block;color:#1a120a;font-weight:900;font-size:14px;line-height:1;font-family:'Playfair Display',serif}
+.smc-b{display:block;color:#1a120a;font-size:6px;margin-top:2px;line-height:1.5;opacity:.85;font-family:'Inter',sans-serif;white-space:pre-line}
+/* cover right */
+.cvr{background:#f5f0e0;display:flex;flex-direction:column}
+.logozone{width:100%;min-height:72px;background:#fff;display:flex;align-items:center;justify-content:center;border-bottom:2px solid #2d4a1e;overflow:hidden;padding:6px}
+.logozone img{max-width:100%;max-height:76px;object-fit:contain}
+.logo-ph-txt{color:#bbb;font-size:8px;text-align:center}
+.hygbox{margin:5px 7px;border:2px solid #2d4a1e;padding:4px 5px;text-align:center}
+.hyg-lbl{font-size:6px;font-weight:700;color:#2d4a1e;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:2px;font-family:'Inter',sans-serif}
+.hyg-nums{display:flex;justify-content:center;gap:2px;margin:1px 0}
+.hyg-num{width:13px;height:13px;border:1.5px solid #2d4a1e;display:flex;align-items:center;justify-content:center;font-size:6.5px;color:#2d4a1e;font-weight:700;border-radius:1px;font-family:'Inter',sans-serif}
+.hyg-rating{font-size:22px;font-weight:900;color:#2d4a1e;display:block;line-height:1;font-family:'Playfair Display',serif}
+.hyg-vg{font-size:5.5px;color:#999;text-transform:uppercase;letter-spacing:1px;font-family:'Inter',sans-serif}
+.photowrap{display:flex;align-items:center;justify-content:center;padding:5px 0}
+.photozone{width:90px;height:90px;overflow:hidden;background:#d8d0c0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:3px solid #2d4a1e}
+.photozone img{width:100%;height:100%;object-fit:cover}
+.photo-ph{color:#aaa;font-size:7px;text-align:center}
+.biz{padding:5px 7px;display:flex;flex-direction:column;gap:2.5px;flex:1}
+.biz-hours{font-weight:700;font-size:8.5px;text-align:center;color:#2d4a1e;text-transform:uppercase;line-height:1.4;white-space:pre-line;font-family:'Inter',sans-serif}
+.biz-addr{font-weight:900;font-size:11.5px;text-align:center;color:#111;line-height:1.2;text-transform:uppercase;white-space:pre-line;font-family:'Inter',sans-serif}
+.biz-del{font-size:6px;text-align:center;color:#666;line-height:1.4;text-transform:uppercase;font-family:'Inter',sans-serif}
+.biz-phone{font-weight:900;font-size:15px;text-align:center;color:#111;letter-spacing:.3px;font-family:'Playfair Display',serif}
+.biz-web{font-size:6.5px;text-align:center;color:#2d4a1e;font-weight:600;text-transform:uppercase;font-family:'Inter',sans-serif}
+.biz-spec{font-size:6.5px;text-align:center;color:#2d4a1e;font-weight:700;text-transform:uppercase;line-height:1.4;font-family:'Inter',sans-serif}
+.biz-allergy{background:#c01818;padding:3px 5px;text-align:center;border-radius:2px}
+.biz-allergy span{font-size:6.5px;color:#fff;font-style:italic;font-family:'Inter',sans-serif}
+.biz-foot{font-size:5.5px;color:#aaa;text-align:center;line-height:1.3;padding-top:2px;font-family:'Inter',sans-serif}
+
+/* ══ PRINT ══ */
+@media print{
+  body,html{background:#fff!important}
+  .shell,.topbar,.page{display:none!important}
+  #print-mount{display:block!important}
+  .menu-root{width:100%}
+  .pg1,.pg2{box-shadow:none!important}
+  @page{size:A3 landscape;margin:4mm}
+}
+#print-mount{display:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="print-mount"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useRef} = React
+
+// ─── helpers ──────────────────────────────────────────
+const tok = () => localStorage.getItem('ma_tok') || ''
+const api = (url,opts={}) => fetch(url,{
+  ...opts,
+  headers:{'Content-Type':'application/json',Authorization:tok(),...(opts.headers||{})},
+  body:opts.body?JSON.stringify(opts.body):undefined
+}).then(r=>r.json())
+
+const saveDB = (key,val) => api(`/api/data?key=${key}`,{method:'POST',body:{value:val}})
+const loadDB = async key => { const r=await api(`/api/data?key=${key}`); return r.value }
+
+// ─── MENU ITEMS DATA ───────────────────────────────────
+const MENU = {
+  c1:[
+    {t:'BIRYANI DISHES',s:'A mixed rice dish lightly fried with spices, served with mixed vegetable curry',i:[
+      ['CHICKEN BIRYANI','£9.50'],['MEAT BIRYANI','£9.90'],['PRAWN BIRYANI','£9.50'],
+      ['KING PRAWN BIRYANI','£12.00'],['CHICKEN TIKKA BIRYANI','£9.95'],['LAMB TIKKA BIRYANI','£10.20'],
+      ['MIXED BIRYANI SPECIAL','£10.50','Chicken, lamb and prawns'],
+      ['VEGETABLE BIRYANI','£8.50'],['MIXED TIKKA BIRYANI','£10.20','Chicken tikka and lamb tikka']
+    ]},
+    {t:'VEGETABLE SIDE DISHES',s:'',i:[
+      ['BOMBAY POTATOES','£3.95','Potatoes cooked with herbs and spices, served dry'],
+      ['SAG ALOO','£3.95','Spinach and potatoes, delicately cooked'],
+      ['MIXED VEGETABLE CURRY','£3.95'],['NIRAMISH BHAJEE','£3.95','Mixed vegetables with onions and spices, stir fried'],
+      ['MUSHROOM BHAJEE','£3.95','Sliced mushrooms, cooked with onions lightly spiced'],
+      ['CAULIFLOWER BHAJEE','£3.95','Cauliflower cooked in spices and herbs, served dry'],
+      ['BRINJAL BHAJEE','£3.95','Aubergines, lightly spiced with onions and herbs'],
+      ['ALOO GOBI','£3.95'],['BINDI BHAJEE','£3.95'],
+      ['SAG BHAJEE','£3.95','Spinach fried with onions and fresh herbs'],
+      ['SAG CHANA','£3.95','Spinach and chickpeas'],['ALOO CHANA','£3.95','Potatoes and chickpeas'],
+      ['TARKA DHALL','£3.95','Lentils with fresh garlic and coriander'],
+      ['KABULI CHANA','£3.95'],['SAG PANEER','£3.95'],['MOTOR PANEER','£3.95']
+    ]},
+    {t:'FISH SPECIALITY',s:'(White fish)',i:[
+      ['FISH BHUNA','£10.50','Dry medium sauce with onions, capsicum and tomatoes'],
+      ['FISH JALFREZI','£10.50','Exotic spices with green chillies, tomatoes and onions (hot)'],
+      ['FISH KARAHI','£10.50','Onions, capsicum, tomatoes tossed in butter with fresh spices'],
+      ['GARLIC CHILLI FISH','£10.50','Fish with garlic, chilli, coriander and fresh herbs (hot)']
+    ]}
+  ],
+  c2:[
+    {t:'RICE DISHES',s:'',i:[
+      ['PLAIN RICE','£2.70','Plain steamed basmati rice'],['PILAU RICE','£3.00','Specially cooked basmati rice'],
+      ['LEMON RICE','£3.60'],['COCONUT RICE','£3.60'],['VEGETABLE RICE','£3.60'],['FRIED RICE','£3.60'],
+      ['EGG FRIED RICE','£3.60'],['KEEMA RICE','£3.60'],['GARLIC RICE','£3.60'],
+      ['SPECIAL FRIED RICE','£3.60','With nuts and sultanas'],
+      ['MUSHROOM RICE','£3.60'],['PEAS RICE','£3.60'],['CHILLI RICE','£3.60']
+    ]},
+    {t:'TANDOORI BREADS',s:'Tastiest leavened Indian bread cooked in the tandoor',i:[
+      ['PLAIN NAAN','£2.70'],['PESHWARI NAAN','£3.10','Sweet stuffing of coconut and fresh cream'],
+      ['KEEMA NAAN','£3.10','Stuffed with lightly spiced mince meat'],
+      ['GARLIC NAAN','£3.10'],['STUFFED NAAN','£3.10'],['CHEESE NAAN','£3.10'],
+      ['CHEESE & GARLIC NAAN','£3.10'],['CHILLI NAAN','£3.10'],['GARLIC & CHILLI NAAN','£3.10'],
+      ['PARATHA','£3.50','Thick Indian Bread'],['STUFFED PARATHA','£3.70','Thick Indian Bread stuffed with mix vegetables'],
+      ['CHAPATI','£1.20','Plain thin flat bread'],['PURI BREAD','£1.50']
+    ]}
+  ],
+  c3:[
+    {t:'APPETISERS',s:'',i:[
+      ['PLAIN PAPADUMS','£0.90'],['SPICY PAPADUMS','£1.00'],
+      ['CHUTNEY (Each)','£0.80','Mint Sauce, Mango Chutney, Lime Pickle, Onion Salad']
+    ]},
+    {t:'TASTY STARTERS',s:'Served with salad and mint sauce on certain dishes',i:[
+      ['SAMOSAS (Veg)','£0.90'],['ONION BHAJEE','£3.30'],['ALOO CHAT','£3.90'],['GARLIC MUSHROOM','£4.50'],
+      ['MEAT SOMASA','£3.30'],['LAMB TIKKA','£4.80'],['SHEEK KEBAB','£4.80'],['TANDOORI MIX KEBAB','£5.50'],
+      ['KASHMIRI KEBAB','£5.50'],['MIXED TIKKA','£4.80'],['KEBAB PURI','£4.80'],['SHAMI KEBAB','£4.80'],
+      ['RASHMI KEBAB','£5.50'],['CHICKEN CHAT','£4.50'],['CHICKEN TIKKA','£4.80'],
+      ['TANDOORI CHICKEN','£4.80'],['GARLIC SPICY CHICKEN','£4.50'],
+      ['JEERA CHICKEN PURI','£4.80'],['PRAWN PURI','£4.80'],['KING PRAWN PURI','£5.50'],['KING PRAWN BUTTERFLY','£5.50']
+    ]}
+  ],
+  c4:[
+    {t:'TANDOORI SPECIALITIES',s:'Marinated overnight with yoghurt and spices, barbecued in the traditional clay oven',i:[
+      ['TANDOORI MIXED GRILL','£12.50'],['TANDOORI KING PRAWN','£12.50'],
+      ['TANDOORI CHICKEN (HALF)','£8.95'],['CHICKEN TIKKA','£8.95'],['LAMB TIKKA','£8.95'],
+      ['MIXED TIKKA','£8.95'],['CHICKEN SHASHLIK','£9.50'],['LAMB SHASHLIK','£9.90'],['MIXED TIKKA SHASHLIK','£9.90']
+    ]},
+    {t:'SHAWARMA KEBABS',s:'',i:[
+      ['MIXED SHAWARMA KEBAB','£9.70'],['DONNER SHAWARMA KEBAB','£9.50'],
+      ['DONNER MEAT AND CHIPS','£9.50'],['DONNER KEBAB INDIAN STYLE','£9.50'],['CHIPS','£3.00']
+    ]},
+    {t:'THE CLASSIC FAVOURITES',s:'',i:[
+      ['CHICKEN','£7.95'],['CHICKEN TIKKA','£8.95'],['MEAT','£8.20'],['LAMB TIKKA','£8.95'],
+      ['PRAWN','£9.00'],['VEGETABLE','£7.10'],['KING PRAWN','£11.95'],
+      ['BHUNA DISHES','','Fairly dry medium, cooked with onions and tomatoes'],
+      ['DUPIAZA DISHES','','Diced chunky onions and capsicum, tossed dry'],
+      ['ROGAN DISHES','','Medium sauce with fresh tomatoes and herbs'],
+      ['SAG DISHES','','Cooked with spinach and onions in special spices'],
+      ['KORMA DISHES','','Very rich sauce, cream and coconut (very mild)'],
+      ['KASHMIRI KORMA','','Cream, coconut and banana (very mild)']
+    ]}
+  ],
+  c5:[
+    {t:'DHANSAK DISHES',s:'Cooked with mixed lentils in a sweet, sour and hot sauce (madras hot)',i:[
+      ['CHICKEN','£8.50'],['MEAT','£8.50'],['PRAWN','£8.50'],['KING PRAWN','£10.50'],['VEGETABLE','£7.50']
+    ]},
+    {t:'SPECIALITIES',s:'',i:[
+      ['CHICKEN TIKKA','£7.95'],['LAMB TIKKA','£9.50'],['PRAWN','£8.20'],['KING PRAWN','£10.95'],['VEGETABLE','£9.00'],
+      ['MASSALA DISHES (mild)','','Home-made yoghurt sauce, fresh cream and coconut'],
+      ['PASSANDA DISHES (mild)','','Marinated in yoghurt with fresh cream and butter'],
+      ['MAKHANI DISHES (mild)','','Delicately cooked with fresh cream, yoghurt, and butter'],
+      ['KARAHI DISHES (medium)','','Onion, capsicum, tomatoes tossed in butter with fresh spices'],
+      ['BALTI DISHES (medium)','','Sizzling blend of spices in the traditional Balti style'],
+      ['TIKKA CHILLI MOSALAH (hot)','','Tangy spicy chilli sauce with fresh green chilli and onions'],
+      ['JALFREZI DISHES (madras hot)','','Onions, green peppers & tomatoes in a hot & spicy sauce'],
+      ['NAGA DISHES (very hot)','','Extremely hot dish with desi hot chilli pickle sauce']
+    ]},
+    {t:'CURRY DISHES',s:'Traditional curry sauce, finest fresh herbs and spices',i:[
+      ['CHICKEN CURRY','£7.50'],['MEAT CURRY','£7.95'],['PRAWN CURRY','£7.95'],
+      ['KING PRAWN CURRY','£10.00'],['CHICKEN TIKKA CURRY','£8.95'],['LAMB TIKKA CURRY','£9.20'],
+      ['VEGETABLE CURRY','£7.00'],['CHICKEN MADRAS','£7.50'],['MEAT MADRAS','£7.50'],
+      ['CHICKEN CEYLON','£7.95'],['PRAWN MADRAS','£10.00'],['KING PRAWN MADRAS','£8.95'],
+      ['CHICKEN VINDALOO','£7.95'],['MEAT VINDALOO','£7.95'],['PRAWN VINDALOO','£7.95'],
+      ['KING PRAWN VINDALOO','£10.00'],['CHICKEN TIKKA VINDALOO','£8.95'],['VEGETABLE VINDALOO','£7.00']
+    ]}
+  ],
+  c6:[
+    {t:'SIGNATURE DISHES',s:'Marinated overnight, served with salad and mint sauce',i:[
+      ['GARLIC CHICKEN OR LAMB CHILLI MASSALA','£9.20 / £9.50','Garlic infused fiery hot dish with green chillies and onions (hot)'],
+      ['KING PRAWN GARLIC CHILLI MASSALA','£10.95','Garlic infused fiery hot dish with green chillies and onions'],
+      ['JAL CHICKEN','£9.20','Chicken tikka with onions, spicy and topped off with yoghurt'],
+      ['TANDOORI KING PRAWN DELIGHT','£11.95','Delicately seasoned, tossed in onions & tomatoes (medium)'],
+      ['CHICKEN or LAMB BANGLADESHI','£9.20 / £9.50','Home-made freshly ground spices with egg & potatoes'],
+      ['CHICKEN or LAMB SHATKORA','£9.20 / £9.50','Citrus twist with garlic, ginger, tomatoes, onions'],
+      ['MUGLAI CHICKEN','£9.20','Chicken tikka cooked with coconut & cream, mixed with egg (mild)'],
+      ['BUTTER CHICKEN TIKKA','£9.20','Chicken in a sliced mild cream & butter sauce (mild)'],
+      ['RAILWAY LAMB CURRY','£9.50','Earthy dish with lamb, pickled spices & potatoes'],
+      ['CHICKEN TIKKA or LAMB TIKKA ACHAR','£9.20 / £9.50','Traditional Indian pickling spices, tangy and aromatic'],
+      ['CHICKEN or LAMB NAGA CHILLI TIKKA','£9.20 / £9.50','Extremely hot with onions and desi hot chilli pickle'],
+      ['CHICKEN TIKKA or LAMB TIKKA SAG','£9.20 / £9.50','Chicken tikka cooked with onions and spinach (medium)'],
+      ['CHICKEN or LAMB HANDI TIKKA','£9.20 / £9.50','Chefs special spices, lemon juice, fenugreek leaves'],
+      ['CHICKEN or LAMB CEYLON','£9.20 / £9.50','Flavoured with coconut powder, highly spiced (hot)'],
+      ['CHICKEN or LAMB PANEER','£9.20 / £9.50','Soft paneer cubes with onions and tomatoes (medium)'],
+      ['MURGI MASALA','£9.50','Chicken tikka with mince meat, onions, herbs and spices']
+    ]}
+  ]
+}
+
+// ─── MENU TEMPLATE ────────────────────────────────────
+function Col({data}){
+  return <>{data.map((sec,i)=>(
+    <div className="msec" key={i}>
+      <div className="msh">
+        <span className="msh-t">{sec.t}</span>
+        {sec.s && <span className="msh-s">{sec.s}</span>}
+      </div>
+      {sec.i.map(([name,price,desc],j)=>(
+        <div className="mitem" key={j}>
+          <div className="mitem-row">
+            <span className="mitem-name">{name}</span>
+            <span className="mitem-dots"/>
+            <span className="mitem-price">{price}</span>
+          </div>
+          {desc && <span className="mitem-desc">{desc}</span>}
+        </div>
+      ))}
+    </div>
+  ))}</>
+}
+
+function MenuTemplate({r}){
+  const d = r || {}
+  const items = d.mb_items || ['Onion Baji','Mint Sauce','Bombay Potato','Pilau Rice','Curry of Your Choice']
+  return (
+    <div className="menu-root">
+      {/* PAGE 1 */}
+      <div className="pg1">
+        <div className="mc"><Col data={MENU.c1}/></div>
+        <div className="mc"><Col data={MENU.c2}/></div>
+        {/* Cover Left */}
+        <div className="cvl">
+          <div className="mbhdr">
+            <span className="mbhdr-rest">{d.name||'RESTAURANT NAME'}</span>
+            <span className="mbhdr-main">MEAL BOX</span>
+            <span className="mbhdr-sub">· COLLECTION ONLY ·</span>
+          </div>
+          <div className="mbphoto">
+            {d.mb_img ? <img src={d.mb_img} alt="meal box"/> : <div className="mb-ph">🥡<br/>Meal Box Photo</div>}
+            <div className="mb-price-ovl">
+              <span className="mb-only">ONLY</span>
+              <span className="mb-price">{d.mb_price||'£11.99'}</span>
+            </div>
+            <div className="mb-buls">
+              {items.map((item,i)=>(
+                <div className="mb-bul" key={i}><span className="mb-dot">◆</span><span className="mb-btxt">{item}</span></div>
+              ))}
+              <div className="mb-note">{d.mb_note||'(Except King Prawn)'}</div>
+            </div>
+          </div>
+          <div className="sp2card">
+            <span className="sp2-t">{d.name||'RESTAURANT'} SPECIAL FOR 2 PERSON</span>
+            <span className="sp2-p">{d.sp2_price||'£37.50'}</span>
+            <span className="sp2-b">{d.sp2_body||'Starter: (2) Papadums And Chutneys, (1) Prawn Puri, (1) Chicken Tikka\nMains: (2) Bengal Chicken\nSides: (1) Sag Aloo, (2) Pilau Rice, (1) Naan Bread'}</span>
+          </div>
+          <div className="sm-ttl">Special Set Meals</div>
+          <div className="sm-sub">CHEFS RECOMMENDATIONS</div>
+          <div className="smcard">
+            <span className="smc-t">(A) FOR ONE PERSON</span>
+            <span className="smc-p">{d.sma_price||'£18.50'}</span>
+            <span className="smc-b">{d.sma_body||'(1) Papadum, (1) Lamb Tikka Starter, (1) Chicken Tikka Mossalah, (1) Mushroom Bhajee, (1) Pilau Rice'}</span>
+          </div>
+          <div className="smcard">
+            <span className="smc-t">(B) FOR TWO PERSON</span>
+            <span className="smc-p">{d.smb_price||'£37.50'}</span>
+            <span className="smc-b">{d.smb_body||'Starters: (2) Papadums, (1) Bhuna Prawn Puri, (1) Chicken Tikka\nMains: (1) Bhuna Chicken Tikka, (1) Lamb Tikka Passanda\nSides: (1) Vegetable Curry, (2) Mushroom Pilau Rice, (1) Garlic Naan'}</span>
+          </div>
+        </div>
+        {/* Cover Right */}
+        <div className="cvr">
+          <div className="logozone">
+            {d.logo ? <img src={d.logo} alt="logo"/> : <div className="logo-ph-txt">🏪<br/>Upload Logo</div>}
+          </div>
+          <div className="hygbox">
+            <span className="hyg-lbl">Food Hygiene Rating</span>
+            <div className="hyg-nums">{[0,1,2,3,4].map(n=><div className="hyg-num" key={n}>{n}</div>)}</div>
+            <span className="hyg-rating">{d.hygiene||'5'}</span>
+            <div className="hyg-vg">Very Good</div>
+          </div>
+          <div className="photowrap">
+            <div className="photozone">
+              {d.food_photo ? <img src={d.food_photo} alt="food"/> : <div className="photo-ph">🍛<br/>Food Photo</div>}
+            </div>
+          </div>
+          <div className="biz">
+            <div className="biz-hours">{d.hours||'OPEN 6 DAYS A WEEK\n5PM – LATE\nCLOSED TUESDAY'}</div>
+            <div className="biz-addr">{d.address||'179 HAMPTON LANE,\nSOUTHAMPTON,\nSO45 1XA'}</div>
+            <div className="biz-del">{d.delivery||'DELIVERY SERVICE AVAILABLE ON ORDERS OVER £13.00 AND WITHIN 3 MILE RADIUS £2.00 (CHARGE FOR OVER 3 MILES – MINIMUM £3.00)'}</div>
+            <div className="biz-phone">{d.phone||'02380 891 870'}</div>
+            <div className="biz-web">{d.website||'WWW.CHUTNEYSINDIANTAKEAWAY.CO.UK'}</div>
+            <div className="biz-spec">{d.tagline||'WE WILL BE PLEASED TO COOK ANY TRADITIONAL INDIAN FOOD ON REQUEST'}</div>
+            <div className="biz-allergy"><span>{d.allergy||'If you have any food allergies please inform us when ordering'}</span></div>
+            <div className="biz-foot">The management reserves the right to refuse service without any explanation</div>
+          </div>
+        </div>
+      </div>
+      {/* PAGE 2 */}
+      <div className="pg2">
+        <div className="mc"><Col data={MENU.c3}/></div>
+        <div className="mc"><Col data={MENU.c4}/></div>
+        <div className="mc"><Col data={MENU.c5}/></div>
+        <div className="mc"><Col data={MENU.c6}/></div>
+      </div>
+    </div>
+  )
+}
+
+// ─── RESTAURANT FORM ───────────────────────────────────
+const DEF = {
+  name:'',logo:'',address:'',phone:'',website:'',hours:'',delivery:'',tagline:'',allergy:'',hygiene:'5',
+  mb_price:'£11.99',mb_items:['Onion Baji','Mint Sauce','Bombay Potato','Pilau Rice','Curry of Your Choice'],
+  mb_note:'(Except King Prawn)',mb_img:'',food_photo:'',
+  sp2_price:'£37.50',sp2_body:'',sma_price:'£18.50',sma_body:'',smb_price:'£37.50',smb_body:''
+}
+
+function RestForm({init,onSave,onClose}){
+  const [f,setF] = useState(init ? {...DEF,...init} : {...DEF})
+  const [busy,setBusy] = useState(false)
+  const s = k => e => setF(p=>({...p,[k]:e.target.value}))
+  const si = i => e => { const a=[...(f.mb_items||[])]; a[i]=e.target.value; setF(p=>({...p,mb_items:a})) }
+  const go = async() => {
+    if(!f.name.trim()) return alert('Restaurant name is required')
+    setBusy(true); await onSave(f); setBusy(false)
+  }
+  return (
+    <div className="ov">
+      <div className="modal">
+        <div className="mhdr">
+          <span className="mhdr-title">{init?'Edit Restaurant':'Add Restaurant'}</span>
+          <button className="mhdr-close" onClick={onClose}>×</button>
+        </div>
+        <div className="mbody">
+          <div className="fi-sec">📍 Basic Information</div>
+          <div className="fi"><label>Restaurant Name *</label><input value={f.name} onChange={s('name')} placeholder="e.g. Raj Palace Takeaway"/></div>
+          <div className="fi-row">
+            <div className="fi"><label>Logo URL</label><input value={f.logo} onChange={s('logo')} placeholder="https://imgbb.com/..."/><div className="fi-hint">Upload to imgbb.com → copy link</div></div>
+            <div className="fi"><label>Hygiene Rating</label><input value={f.hygiene} onChange={s('hygiene')} placeholder="5"/></div>
+          </div>
+          <div className="fi"><label>Address</label><textarea value={f.address} onChange={s('address')} rows={3} placeholder={"25 High Street,\nBirmingham,\nB1 1AA"}/></div>
+          <div className="fi-row">
+            <div className="fi"><label>Phone</label><input value={f.phone} onChange={s('phone')} placeholder="0121 000 0000"/></div>
+            <div className="fi"><label>Website</label><input value={f.website} onChange={s('website')} placeholder="WWW.EXAMPLE.CO.UK"/></div>
+          </div>
+          <div className="fi"><label>Opening Hours</label><textarea value={f.hours} onChange={s('hours')} rows={2} placeholder={"OPEN 7 DAYS A WEEK\n5PM – 11PM"}/></div>
+          <div className="fi"><label>Delivery Info</label><textarea value={f.delivery} onChange={s('delivery')} rows={2} placeholder="DELIVERY AVAILABLE ON ORDERS OVER £13.00..."/></div>
+          <div className="fi"><label>Tagline / Special Note</label><input value={f.tagline} onChange={s('tagline')} placeholder="WE WILL BE PLEASED TO COOK..."/></div>
+
+          <div className="fi-sec">📸 Images</div>
+          <div className="fi-row">
+            <div className="fi"><label>Meal Box Photo URL</label><input value={f.mb_img} onChange={s('mb_img')} placeholder="https://imgbb.com/..."/></div>
+            <div className="fi"><label>Food Photo URL (circular)</label><input value={f.food_photo} onChange={s('food_photo')} placeholder="https://imgbb.com/..."/></div>
+          </div>
+
+          <div className="fi-sec">🥡 Meal Box Offer</div>
+          <div className="fi-row">
+            <div className="fi"><label>Meal Box Price</label><input value={f.mb_price} onChange={s('mb_price')} placeholder="£11.99"/></div>
+            <div className="fi"><label>Small Print Note</label><input value={f.mb_note} onChange={s('mb_note')} placeholder="(Except King Prawn)"/></div>
+          </div>
+          <div className="fi"><label>Meal Box Items (5 bullet points)</label>
+            {[0,1,2,3,4].map(i=><input key={i} style={{marginBottom:4}} value={(f.mb_items||[])[i]||''} onChange={si(i)} placeholder={`Item ${i+1}`}/>)}
+          </div>
+
+          <div className="fi-sec">🍽 Specials & Set Meals</div>
+          <div className="fi-row">
+            <div className="fi"><label>Special for 2 — Price</label><input value={f.sp2_price} onChange={s('sp2_price')} placeholder="£37.50"/></div>
+            <div className="fi"><label>Set Meal A — Price</label><input value={f.sma_price} onChange={s('sma_price')} placeholder="£18.50"/></div>
+          </div>
+          <div className="fi"><label>Special for 2 — Description</label><textarea value={f.sp2_body} onChange={s('sp2_body')} rows={3} placeholder={"Starter: ...\nMains: ...\nSides: ..."}/></div>
+          <div className="fi-row">
+            <div className="fi"><label>Set Meal A — Description</label><textarea value={f.sma_body} onChange={s('sma_body')} rows={3}/></div>
+            <div className="fi">
+              <label>Set Meal B — Price</label><input value={f.smb_price} onChange={s('smb_price')} placeholder="£37.50" style={{marginBottom:4}}/>
+              <label>Set Meal B — Description</label><textarea value={f.smb_body} onChange={s('smb_body')} rows={2}/>
+            </div>
+          </div>
+        </div>
+        <div className="mfoot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-gold" onClick={go} disabled={busy}>{busy?'Saving…':'Save Restaurant'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── PAGES ─────────────────────────────────────────────
+function PageRestaurants({rests,setRests}){
+  const [q,setQ]=useState('')
+  const [form,setForm]=useState(null) // null | 'add' | index
+  const filtered = rests.filter(r=>(r.name+r.address+r.phone).toLowerCase().includes(q.toLowerCase()))
+
+  const save = async data => {
+    let list
+    if(form==='add') list=[...rests,{...data,id:Date.now()}]
+    else list=rests.map((r,i)=>i===form?{...r,...data}:r)
+    setRests(list); await saveDB('restaurants',list); setForm(null)
+  }
+  const del = async i => {
+    if(!confirm('Delete this restaurant?')) return
+    const list=rests.filter((_,j)=>j!==i)
+    setRests(list); await saveDB('restaurants',list)
+  }
+
+  return(
+    <div>
+      <div className="pg-hdr">
+        <div><div className="pg-title">Restaurants</div><div className="pg-sub">Manage your restaurant clients</div></div>
+        <span className="count-badge">{rests.length} total</span>
+        <div className="ml-auto" style={{display:'flex',gap:8,alignItems:'center'}}>
+          <input className="search-inp" placeholder="🔍 Search..." value={q} onChange={e=>setQ(e.target.value)}/>
+          <button className="btn btn-gold" onClick={()=>setForm('add')}>+ Add Restaurant</button>
+        </div>
+      </div>
+      {filtered.length===0
+        ? <div className="empty"><div className="empty-icon">🍽</div><p>No restaurants yet — add your first one!</p></div>
+        : <div className="rest-grid">
+            {filtered.map((r,i)=>(
+              <div className="rest-card" key={r.id||i}>
+                <div className="rc-logo">
+                  {r.logo ? <img src={r.logo} alt="" style={{maxHeight:56,maxWidth:'88%',objectFit:'contain'}}/> : <div className="rc-logo-ph">No logo</div>}
+                </div>
+                <div className="rc-body">
+                  <div className="rc-name">{r.name}</div>
+                  <div className="rc-addr">{(r.address||'').replace(/\n/g,', ')}</div>
+                  <div className="rc-addr">{r.phone}</div>
+                  <div className="rc-tags">
+                    {r.mb_price&&<span className="tag tag-a">Meal Box {r.mb_price}</span>}
+                    {r.hygiene&&<span className="tag tag-g">Hygiene ★{r.hygiene}</span>}
+                  </div>
+                </div>
+                <div className="rc-foot">
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setForm(rests.indexOf(r))}>✏ Edit</button>
+                  <button className="btn btn-red btn-sm" onClick={()=>del(rests.indexOf(r))}>🗑</button>
+                </div>
+              </div>
+            ))}
+          </div>
+      }
+      {form!==null&&<RestForm init={form==='add'?null:rests[form]} onSave={save} onClose={()=>setForm(null)}/>}
+    </div>
+  )
+}
+
+function PageGenerate({rests}){
+  const [sel,setSel]=useState(null)
+  const print = () => {
+    const el=document.getElementById('print-mount')
+    const tmp=document.createElement('div')
+    ReactDOM.render(<MenuTemplate r={sel}/>,tmp)
+    el.innerHTML=tmp.innerHTML
+    window.print()
+  }
+  return(
+    <div>
+      <div className="pg-hdr">
+        <div><div className="pg-title">Generate Menu</div><div className="pg-sub">Select restaurant → preview → download PDF</div></div>
+        {sel&&<div className="ml-auto" style={{display:'flex',gap:8}}>
+          <button className="btn btn-gold btn-lg" onClick={print}>⬇ Download PDF</button>
+        </div>}
+      </div>
+      <div className="gen-layout">
+        <div className="side-panel">
+          <div className="sp-hdr">SELECT RESTAURANT</div>
+          {rests.length===0
+            ? <div style={{padding:20,color:'#333',fontSize:11,textAlign:'center'}}>No restaurants yet</div>
+            : rests.map((r,i)=>(
+              <div key={r.id||i} className={`sp-item${sel?.id===r.id?' sel':''}`} onClick={()=>setSel(r)}>
+                <div className="sp-thumb">
+                  {r.logo?<img src={r.logo} alt=""/>:<span style={{fontSize:16}}>🏪</span>}
+                </div>
+                <div>
+                  <div className="sp-name">{r.name}</div>
+                  <div className="sp-city">{(r.address||'').split('\n')[0]}</div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        <div className="preview-area">
+          {sel
+            ? <>
+                <div className="prev-toolbar">
+                  <span className="prev-info">📄 {sel.name} — A3 Landscape (2 pages)</span>
+                  <button className="btn btn-gold" onClick={print}>⬇ Download PDF</button>
+                </div>
+                <div className="prev-scroll"><MenuTemplate r={sel}/></div>
+              </>
+            : <div className="prev-placeholder">
+                <div className="icon">👈</div>
+                <p>Select a restaurant to preview the menu</p>
+              </div>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PageSettings({session,rests,setRests}){
+  const [tab,setTab]=useState('users')
+  const [users,setUsers]=useState([])
+  const [nu,setNu]=useState({username:'',password:'',name:'',role:'designer'})
+  const [busy,setBusy]=useState(false)
+
+  useEffect(()=>{if(tab==='users')api('/api/users').then(d=>{if(Array.isArray(d))setUsers(d)})},[tab])
+
+  const addUser=async()=>{
+    if(!nu.username||!nu.password) return alert('Username and password required')
+    setBusy(true)
+    await api('/api/users',{method:'POST',body:nu})
+    setNu({username:'',password:'',name:'',role:'designer'})
+    const d=await api('/api/users'); if(Array.isArray(d))setUsers(d)
+    setBusy(false)
+  }
+  const delUser=async id=>{
+    if(!confirm('Remove this user?'))return
+    await api('/api/users',{method:'DELETE',body:{id}})
+    const d=await api('/api/users'); if(Array.isArray(d))setUsers(d)
+  }
+  const exportBk=()=>{
+    const b=new Blob([JSON.stringify({restaurants:rests,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'})
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='menu-automate-backup.json'; a.click()
+  }
+  const importBk=e=>{
+    const f=e.target.files[0]; if(!f)return
+    const reader=new FileReader()
+    reader.onload=async ev=>{
+      try{
+        const d=JSON.parse(ev.target.result)
+        if(d.restaurants){setRests(d.restaurants);await saveDB('restaurants',d.restaurants);alert(`Imported ${d.restaurants.length} restaurants!`)}
+      }catch{alert('Invalid backup file')}
+    }
+    reader.readAsText(f); e.target.value=''
+  }
+
+  return(
+    <div>
+      <div className="pg-hdr"><div className="pg-title">Settings</div></div>
+      <div className="set-layout">
+        <div className="set-nav">
+          {session?.role==='admin'&&<div className={`set-nav-item${tab==='users'?' on':''}`} onClick={()=>setTab('users')}>👥 Team Members</div>}
+          <div className={`set-nav-item${tab==='backup'?' on':''}`} onClick={()=>setTab('backup')}>💾 Backup</div>
+          <div className={`set-nav-item${tab==='setup'?' on':''}`} onClick={()=>setTab('setup')}>⚙ Setup Guide</div>
+        </div>
+        <div className="set-panel">
+          {tab==='users'&&session?.role==='admin'&&<>
+            <h3>Team Members</h3>
+            <table className="user-tbl">
+              <thead><tr><th>Name</th><th>Username</th><th>Role</th><th/></tr></thead>
+              <tbody>
+                <tr><td>You</td><td>admin</td><td><span className="tag tag-a">Admin</span></td><td/></tr>
+                {users.map(u=><tr key={u.id}><td>{u.name}</td><td>{u.username}</td><td><span className="tag tag-g">{u.role}</span></td><td><button className="btn btn-red btn-sm" onClick={()=>delUser(u.id)}>Remove</button></td></tr>)}
+              </tbody>
+            </table>
+            <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid #1e1e1e'}}>
+              <h3>Add Team Member</h3>
+              <div className="fi-row"><div className="fi"><label>Full Name</label><input value={nu.name} onChange={e=>setNu(p=>({...p,name:e.target.value}))} placeholder="John Smith"/></div>
+                <div className="fi"><label>Username</label><input value={nu.username} onChange={e=>setNu(p=>({...p,username:e.target.value}))} placeholder="johnsmith"/></div></div>
+              <div className="fi-row"><div className="fi"><label>Password</label><input type="password" value={nu.password} onChange={e=>setNu(p=>({...p,password:e.target.value}))}/></div>
+                <div className="fi"><label>Role</label><select value={nu.role} onChange={e=>setNu(p=>({...p,role:e.target.value}))}><option value="designer">Designer</option><option value="admin">Admin</option></select></div></div>
+              <button className="btn btn-gold" onClick={addUser} disabled={busy}>{busy?'Adding…':'Add Member'}</button>
+            </div>
+          </>}
+
+          {tab==='backup'&&<>
+            <h3>Backup & Restore</h3>
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{background:'#111',border:'1px solid #1e1e1e',borderRadius:6,padding:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#fff',marginBottom:6}}>Export Backup</div>
+                <div style={{fontSize:10,color:'#444',marginBottom:12}}>Download all restaurant data as JSON</div>
+                <button className="btn btn-gold" onClick={exportBk}>⬇ Export</button>
+              </div>
+              <div style={{background:'#111',border:'1px solid #1e1e1e',borderRadius:6,padding:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#fff',marginBottom:6}}>Import Backup</div>
+                <div style={{fontSize:10,color:'#444',marginBottom:12}}>Restore from a .json backup file</div>
+                <label className="btn btn-ghost" style={{cursor:'pointer'}}>⬆ Import<input type="file" accept=".json" style={{display:'none'}} onChange={importBk}/></label>
+              </div>
+            </div>
+          </>}
+
+          {tab==='setup'&&<>
+            <h3>Setup Guide</h3>
+            <p style={{fontSize:10,color:'#b8a060',fontWeight:700,marginBottom:8}}>1. Supabase — Run this SQL:</p>
+            <div className="set-code">{`create table ma_data (
+  key text primary key,
+  value jsonb,
+  updated_at timestamptz
+);
+
+create table ma_sessions (
+  id serial primary key,
+  token text unique,
+  username text,
+  role text,
+  expires_at timestamptz
+);
+
+create table ma_users (
+  id serial primary key,
+  username text unique,
+  password text,
+  name text,
+  role text,
+  created_at timestamptz default now()
+);`}</div>
+            <p style={{fontSize:10,color:'#b8a060',fontWeight:700,margin:'16px 0 8px'}}>2. Vercel Environment Variables:</p>
+            <div className="set-code">{`SUPABASE_URL        = https://xxx.supabase.co
+SUPABASE_ANON_KEY   = eyJhbGc...
+ADMIN_PASSWORD      = your-secure-password`}</div>
+          </>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── ROOT APP ──────────────────────────────────────────
+function App(){
+  const [sess,setSess]=useState(null)
+  const [loading,setLoading]=useState(true)
+  const [tab,setTab]=useState('restaurants')
+  const [rests,setRests]=useState([])
+  const [lf,setLf]=useState({username:'',password:''})
+  const [lerr,setLerr]=useState('')
+  const [lin,setLin]=useState(false)
+
+  useEffect(()=>{
+    if(!tok()){setLoading(false);return}
+    api('/api/auth?action=verify')
+      .then(r=>{ if(r.username){setSess(r);return loadDB('restaurants').then(d=>{if(Array.isArray(d))setRests(d)})} else localStorage.removeItem('ma_tok') })
+      .catch(()=>{})
+      .finally(()=>setLoading(false))
+  },[])
+
+  const login=async()=>{
+    if(!lf.username||!lf.password)return
+    setLin(true);setLerr('')
+    const r=await api('/api/auth?action=login',{method:'POST',body:lf})
+    if(r.token){
+      localStorage.setItem('ma_tok',r.token);setSess({username:r.username,role:r.role})
+      const d=await loadDB('restaurants'); if(Array.isArray(d))setRests(d)
+    }else setLerr(r.error||'Login failed')
+    setLin(false)
+  }
+
+  const logout=async()=>{
+    await api('/api/auth?action=logout',{method:'POST'})
+    localStorage.removeItem('ma_tok');setSess(null);setRests([])
+  }
+
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',color:'#b8a060'}}>Loading…</div>
+
+  if(!sess) return(
+    <div className="login-page">
+      <div className="login-box">
+        <div className="login-logo"><h1>MENU AUTOMATE</h1><p>Menu Template System</p></div>
+        {lerr&&<div className="lf-error">{lerr}</div>}
+        <label className="lf-label">Username</label>
+        <input className="lf-input" value={lf.username} onChange={e=>setLf(p=>({...p,username:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&login()} placeholder="admin"/>
+        <label className="lf-label">Password</label>
+        <input className="lf-input" type="password" value={lf.password} onChange={e=>setLf(p=>({...p,password:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&login()}/>
+        <button className="lf-btn" onClick={login} disabled={lin}>{lin?'Signing in…':'Sign In'}</button>
+      </div>
+    </div>
+  )
+
+  return(
+    <div className="shell">
+      <div className="topbar">
+        <div className="tb-logo">MENU <span>AUTOMATE</span></div>
+        <div className="tb-nav">
+          {[['restaurants','🍽 Restaurants'],['generate','⚡ Generate'],['settings','⚙ Settings']].map(([t,l])=>(
+            <button key={t} className={`tb-nav-btn${tab===t?' on':''}`} onClick={()=>setTab(t)}>{l}</button>
+          ))}
+        </div>
+        <div className="tb-right">
+          <span className="tb-user">👤 {sess.username}</span>
+          <button className="tb-logout" onClick={logout}>Sign out</button>
+        </div>
+      </div>
+      <div className="page">
+        {tab==='restaurants'&&<PageRestaurants rests={rests} setRests={setRests}/>}
+        {tab==='generate'&&<PageGenerate rests={rests}/>}
+        {tab==='settings'&&<PageSettings session={sess} rests={rests} setRests={setRests}/>}
+      </div>
+    </div>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>)
+</script>
+</body>
+</html>
